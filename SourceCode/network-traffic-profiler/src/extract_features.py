@@ -1,3 +1,5 @@
+# step 1: extract features from pcap file
+
 from scapy.all import rdpcap
 import pandas as pd
 import os
