@@ -237,7 +237,4 @@ if __name__ == "__main__":
     input_csv = os.path.join(script_dir, "csv_output", "test_flows.csv")
     output_csv = os.path.join(script_dir, "csv_output", "test_flows_validated.csv")
 
-
-    #input_csv = r"C:\2003 RESPO\comp2003-2025-2026-team-15\SourceCode\network-traffic-profiler\src\csv_output\test_flows.csv"
-    #output_csv = r"C:\2003 RESPO\comp2003-2025-2026-team-15\SourceCode\network-traffic-profiler\src\csv_output\test_flows_validated.csv"
     validate_dataset(input_csv, output_csv)
