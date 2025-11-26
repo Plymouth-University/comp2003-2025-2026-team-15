@@ -14,7 +14,6 @@ An interactive dashboard that helps non-experts understand network traffic from 
 ## Requirements
 **Python 3.10+**\
 **Virtual Environment (venv)**\
-**TShark** (included with Wireshark) - required for PyShark packet parsing
 
 ## Installation
 Navigate to the /src folder
@@ -33,7 +32,7 @@ Navigate to the /src folder
 Examples will be included to demonstrate how to run the dashboard and interpret classification results.
 
 ## Tech Stack
-PCAP parsing: **pyshark**\
+PCAP parsing: **scapy**\
 Feature extraction: **nfstream**\
 CSV data storage: **pandas**\
 Dashboard: **streamlit**\
