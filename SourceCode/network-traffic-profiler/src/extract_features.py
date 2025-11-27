@@ -5,9 +5,9 @@ import pandas as pd
 import os
 
 
-def extract_flows():
+def extract_flows(PCAP_FILE):
     # --- Configuration ---
-    PCAP_FILE = "pcap_data/test.pcap"
+    #PCAP_FILE = "pcap_data/test.pcap"
     CSV_PATH = "csv_output/"
     # Read the file name
     pcap_basename = os.path.splitext(os.path.basename(PCAP_FILE))[0]
@@ -93,14 +93,8 @@ def extract_flows():
     # Drop raw timestamps for a cleaner output
     df_flows = df_flows.drop(columns=["start_time", "end_time"])
 
-    # Save the flow summary to CSV for the dashboard/ML model
-    # Filename matches PCAP filename
-    df_flows.to_csv(OUTPUT_CSV, index=False)
-    
-
     print(f"\nFlow extraction complete. Generated {len(df_flows)} unique flows.")
-    print(f"Summary saved to {OUTPUT_CSV}")
-    print("\n--- Flow Summary Head ---")
-    print(df_flows)
+    return df_flows
 
-extract_flows();
+if __name__ == "__main__":
+    extract_flows("pcap_data/test.pcap")
