@@ -6,10 +6,9 @@ from sklearn.preprocessing import StandardScaler
 from sklearn.ensemble import IsolationForest
 import os
 
-def build_dataset(validated_csv):
+def build_dataset(df, pcap_basename):
 
-    print(f"Loading validated dataset: {validated_csv}") # confirm csv file that is being passed into function
-    df = pd.read_csv(validated_csv) # read passed csv file
+    print(f"Building ML dataset") # confirm csv file that is being passed into function
 
     # 1. keep only valid rows from process_dataset.py
     df = df[df["is_valid"] == True] # filter out invalid or corrupted flows
@@ -43,7 +42,7 @@ def build_dataset(validated_csv):
     scaled = scaler.fit_transform(numeric_df) # calculates mean and std for each column, then returns the scaled version
 
     # 6. save scaled data as npy file (binary matrix format), ready to be passed to the model to be trained
-    npy_file = validated_csv.replace("_validated.csv", "_scaled.npy") # create new .npy file with same base name as the validated csv file
+    npy_file = "npy_output/" + pcap_basename + ("_scaled.npy") # create new .npy file with same base name as the pcap file
     np.save(npy_file, scaled) # saves the scaled numpy array to npy file
 
     print(f"Scaled dataset saved to {npy_file}")
@@ -67,9 +66,3 @@ def build_dataset(validated_csv):
     print("Dataset ready for ML") # cleaned and scaled dataset ready to be passed through model
 
     return npy_file # build_dataset() returns npy_file
-
-# run with build_dataset.py
-if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__)) # get current folder path
-    validated_csv = os.path.join(script_dir, "csv_output", "test_flows_validated.csv") # define input and output csv file
-    build_dataset(validated_csv) # run build_dataset function on validated csv file

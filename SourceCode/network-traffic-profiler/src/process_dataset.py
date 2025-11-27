@@ -69,8 +69,20 @@ def validate_row(row):
         expected_type = rules["type"]
         
         # Handle numpy integer types
-        if expected_type == int and isinstance(value, np.integer):
-            value = int(value)
+        if expected_type == int:
+            try:
+                value = int(value)
+            except Exception:
+                errors.append(f"{field}: expected int, got {type(value).__name__}")
+                continue
+
+
+        if expected_type == float:
+            try:
+                value = float(value)
+            except Exception:
+                errors.append(f"{field}: expected float, got {type(value).__name__}")
+            continue
             
         # Type check
         if not isinstance(value, expected_type):
@@ -191,8 +203,8 @@ def validate_row(row):
 #  - Validates each row using validate_row()
 #  - Adds validation columns to csv ('is_valid' and 'error_reason')
 # =====================================================================
-def validate_dataset(input_file, output_file=None):
-    df = pd.read_csv(input_file)
+def validate_dataset(df, make_csv, pcap_basename):
+    #df = pd.read_csv(input_file)
     all_errors = {}
     
     # Column existence check
@@ -218,25 +230,11 @@ def validate_dataset(input_file, output_file=None):
     for idx, errs in all_errors.items():
         df.at[idx, "is_valid"] = False
         df.at[idx, "error_reason"] = "; ".join(errs)
+        
+    print("Validated dataset")
+    
+    if make_csv:
+        df.to_csv("csv_output/" + pcap_basename + ("_validated.csv"), index=False)
+        print(f"Validated dataset saved")
 
-    if output_file:
-        df.to_csv(output_file, index=False)
-        print(f"Validated dataset saved to {output_file}")
-    else:
-        print("Validation complete. No output file specified.")
-
-    print(f"Total rows: {len(df)}, Invalid rows: {len(all_errors)}")
-    return df, all_errors
-
-# =======================
-# ENTRY POINT
-# =======================
-# Note: PCAP data for validation checks from validationChecklist are added to test_flows.csv (line 42 onwards)
-
-if __name__ == "__main__":
-    script_dir = os.path.dirname(os.path.abspath(__file__))
-    # Build paths relative to script folder
-    input_csv = os.path.join(script_dir, "csv_output", "test_flows.csv")
-    output_csv = os.path.join(script_dir, "csv_output", "test_flows_validated.csv")
-
-    validate_dataset(input_csv, output_csv)
+    return df
