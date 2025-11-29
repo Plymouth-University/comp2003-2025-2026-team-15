@@ -18,14 +18,13 @@ protocols = st.multiselect("Filter by protocol", df["protocol_name"].unique())
 filtered = df[df["protocol_name"].isin(protocols)] if protocols else df
 
 
-# Charts
+# Packet per protocol bar chart
 st.subheader("Packet Count per Protocol")
 fig1 = px.bar(filtered, x="protocol_name", y="packet_count")
 st.plotly_chart(fig1)
 
+# Traffic over time
 st.subheader("Traffic Over Time (Bytes per Packet Index)")
-
-# Group by first packet index
 time_df = filtered.groupby("first_packet_index")["byte_count"].sum().reset_index()
 
 fig_time = px.bar(
