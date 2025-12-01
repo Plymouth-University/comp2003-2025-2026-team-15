@@ -3,12 +3,56 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import main
+import tempfile
 
 st.set_page_config(page_title="Network Traffic Profiler", layout="wide")
 st.title("Network Traffic Dashboard")
 
-# Loads validated CSV 
-df = pd.read_csv("csv_output/test_flows_validated.csv")
+# ---------------------
+# Run pipeline
+# ---------------------
+
+# Caches result to speed up filtering data
+# Only bypasses the cache if func arguments change
+# show_spinner=False prevents a loading spinner from being displayed,
+# of which the content of is un-modifable. A custom spinner is used later.
+@st.cache_data(show_spinner=False)
+def load_dataset(path):
+    return main.run_pipeline(path)
+
+# Initialise session state keys
+# These enable the code to check if a new PCAP file has been uploaded
+# in order to bypass cached pipeline data
+if "uploaded_file_name" not in st.session_state:
+    st.session_state.uploaded_file_name = None
+if "df" not in st.session_state:
+    st.session_state.df = None
+
+# PCAP File Upload
+st.sidebar.header("File Upload")
+uploaded_file = st.sidebar.file_uploader("Upload a .pcap/.pcapng file", type=["pcap", "pcapng"], accept_multiple_files=False)
+# If no file has been uploaded, stop the app
+if uploaded_file is None:
+    st.info("Upload a PCAP file to start!")
+    st.stop()
+else:
+    # If a new file has been uploaded, run the pipeline
+    if uploaded_file.name != st.session_state.uploaded_file_name:
+        # Write to a temporary file as web applications cannot access
+        # local files on a computer
+        temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pcap")
+        temp.write(uploaded_file.read())
+        # Run pipeline passing through the temporary file
+        with st.spinner("Processing PCAP…"):
+            flows_df = load_dataset(temp.name)
+
+        # Update session state to track uploaded file
+        st.session_state.flows = flows_df
+        st.session_state.uploaded_file_name = uploaded_file.name
+
+# Copy the extracted data into a dataframe
+df = st.session_state.flows.copy()
 
 # Removes invalid rows
 df = df[df["is_valid"] == True]
