@@ -13,13 +13,11 @@ CSV Validation Checklist
        - duration: ≥ 0
 
 2. IP Address Checks
-   - src_ip is a valid IPv4 or IPv6.
-   - dst_ip is a valid IPv4 or IPv6.
-   - src_ip ≠ dst_ip (no loopback flows).
-   - src_ip is not a multicast address.
-   - dst_ip is not a multicast address.
-   - IPv4 src_ip is not broadcast (255.255.255.255).
-   - IPv4 dst_ip is not broadcast (255.255.255.255).
+   - Valid IPv4/IPv6
+   - src_ip ≠ dst_ip
+   - No multicast addresses.
+   - No broadcast (255.255.255.255) addresses.
+   - No loopback addresses (127.0.0.1 / ::1)
 
 3. Protocol & Port Checks
    - protocol exists in IANA_PROTOCOLS (1=ICMP, 6=TCP, 17=UDP).
@@ -35,12 +33,12 @@ CSV Validation Checklist
 
 5. Packet Index Checks
    - first_packet_index ≤ last_packet_index.
-   - If single packet (first = last) → duration ≈ 0.
 
 6. Duration Checks
    - duration ≥ 0.
    - Single packet flows: duration ≤ 0.001s.
    - Multiple packets: duration ≠ 0.
+   - Multi-packet flows > 1 hour flagged.
 
 7. Protocol-Port Sanity Checks
    - DNS (port 53) → duration < 10s.
@@ -120,3 +118,4 @@ Results:
 - Rows 2–16 → each triggers a specific validation error.
 - Row 17 → duplicate of row 1 to test duplicate detection.
 - Row 18 → multiple errors
+
