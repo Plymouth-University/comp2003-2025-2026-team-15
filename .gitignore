@@ -1,2 +1,3 @@
 # Virtual Environments
 venv/
+SourceCode/network-traffic-profiler/src/__pycache__
