@@ -6,12 +6,14 @@ from process_dataset import validate_dataset
 from build_dataset import build_dataset
 import os
 
-PCAP_FILE = "pcap_data/test.pcap"
-pcap_basename = os.path.splitext(os.path.basename(PCAP_FILE))[0]
-# Extract data and identify flows
-flows = extract_flows(PCAP_FILE)
-# Validate data
-# Second param indicates whether to generate a CSV file
-validated_data = validate_dataset(flows, False, pcap_basename)
-# Build a dataset for ML
-build_dataset(validated_data, pcap_basename)
+
+def run_pipeline(pcap_path):
+    pcap_basename = os.path.splitext(os.path.basename(pcap_path))[0]
+    # Extract data and identify flows
+    flows = extract_flows(pcap_path)
+    # Validate data
+    # Second param indicates whether to generate a CSV file
+    validated_data = validate_dataset(flows, False, pcap_basename)
+    # Build a dataset for ML
+    build_dataset(validated_data, pcap_basename)
+    return validated_data
