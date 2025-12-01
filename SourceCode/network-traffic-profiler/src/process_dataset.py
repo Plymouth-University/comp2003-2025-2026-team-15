@@ -125,8 +125,8 @@ def validate_row(row):
             errors.append("src_ip is a multicast address")
         if ip_obj.is_loopback:
             errors.append("src_ip is a loopback address")
-        if ip_obj.is_private:
-            errors.append("src_ip is a private address")
+   #    if ip_obj.is_private:
+   #        errors.append("src_ip is a private address")
         if isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj == ipaddress.IPv4Address("255.255.255.255"):
             errors.append("src_ip is a broadcast address")
          
@@ -137,8 +137,8 @@ def validate_row(row):
             errors.append("dst_ip is a multicast address")
         if ip_obj.is_loopback:
             errors.append("dst_ip is a loopback address")
-        if ip_obj.is_private:
-            errors.append("dst_ip is a private address")
+   #    if ip_obj.is_private:
+   #        errors.append("dst_ip is a private address")
         if isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj == ipaddress.IPv4Address("255.255.255.255"):
             errors.append("dst_ip is a broadcast address")
 
@@ -268,3 +268,4 @@ def validate_dataset(df, make_csv, pcap_basename):
         print(f"Validated dataset saved")
 
     return df
+
