@@ -43,6 +43,14 @@ def validate_ip(ip_str):
         return True
     except:
         return False
+
+# updated
+def is_private_ip(ip_str):
+    try:
+        ip_obj = ipaddress.ip_address(ip_str)
+        return ip_obj.is_private
+    except:
+        return False
     
 # =========================
 # Row-level validation
@@ -110,16 +118,28 @@ def validate_row(row):
     if row["src_ip"] == row["dst_ip"]:
         errors.append("src_ip and dst_ip must not be identical")
         
+    # updated
     if validate_ip(row["src_ip"]):
-        if ipaddress.ip_address(row["src_ip"]).is_multicast:
+        ip_obj = ipaddress.ip_address(row["src_ip"])
+        if ip_obj.is_multicast:
             errors.append("src_ip is a multicast address")
-        if isinstance(ipaddress.ip_address(row["src_ip"]), ipaddress.IPv4Address) and ipaddress.ip_address(row["src_ip"]) == ipaddress.IPv4Address("255.255.255.255"):
+        if ip_obj.is_loopback:
+            errors.append("src_ip is a loopback address")
+        if ip_obj.is_private:
+            errors.append("src_ip is a private address")
+        if isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj == ipaddress.IPv4Address("255.255.255.255"):
             errors.append("src_ip is a broadcast address")
-        
+         
+    # updated
     if validate_ip(row["dst_ip"]):
-        if ipaddress.ip_address(row["dst_ip"]).is_multicast:
+        ip_obj = ipaddress.ip_address(row["dst_ip"])
+        if ip_obj.is_multicast:
             errors.append("dst_ip is a multicast address")
-        if isinstance(ipaddress.ip_address(row["dst_ip"]), ipaddress.IPv4Address) and ipaddress.ip_address(row["dst_ip"]) == ipaddress.IPv4Address("255.255.255.255"):
+        if ip_obj.is_loopback:
+            errors.append("dst_ip is a loopback address")
+        if ip_obj.is_private:
+            errors.append("dst_ip is a private address")
+        if isinstance(ip_obj, ipaddress.IPv4Address) and ip_obj == ipaddress.IPv4Address("255.255.255.255"):
             errors.append("dst_ip is a broadcast address")
 
     # ---------------------------------------------------------
@@ -133,20 +153,20 @@ def validate_row(row):
     protocol = row["protocol"]
     src_port = row["src_port"]
     dst_port = row["dst_port"]
-
-    # TCP/UDP must have valid ports
-    if protocol in (6, 17) and (src_port is None or dst_port is None):
-        errors.append("TCP/UDP flows must include src_port and dst_port")
-    # ICMP should not have ports (must be 0)
-    if protocol == 1 and (src_port != 0 or dst_port != 0):
-        errors.append("ICMP should not use ports (should be 0)")
+    
     # Protocol number must be valid
     if protocol not in IANA_PROTOCOLS:
         errors.append(f"Unknown protocol number: {protocol}")
     # Protocol name must match the protocol number
     if row["protocol_name"].upper() != IANA_PROTOCOLS.get(protocol,"").upper():
         errors.append(f"Protocol mismatch: protocol={protocol} but protocol_name={row['protocol_name']}")
-
+    # TCP/UDP must have valid ports
+    if protocol in (6, 17) and (src_port is None or dst_port is None):
+        errors.append("TCP/UDP flows must include src_port and dst_port")
+    # ICMP should not have ports (must be 0)
+    if protocol == 1 and (src_port != 0 or dst_port != 0):
+        errors.append("ICMP should not use ports (should be 0)")
+    
     # ---------------------------------------------------------
     # Packet, Byte, Average Packet Size Validation
     #  - packet_count >= 0
@@ -163,6 +183,10 @@ def validate_row(row):
         expected_avg = row["byte_count"] / row["packet_count"]
         if abs(row["avg_packet_size"] - expected_avg) > 5:
             errors.append(f"avg_packet_size inconsistent (expected ~{expected_avg:.2f}, got {row['avg_packet_size']})")
+            
+    # updated: Extreme packet/byte sizes
+    if row["avg_packet_size"] > 1500 or row["avg_packet_size"] < 20:
+        errors.append("avg_packet_size outside typical Ethernet range (20-1500 bytes)")
     
     # ---------------------------------------------------------
     # Packet Index Validation
@@ -179,10 +203,16 @@ def validate_row(row):
     #  - Single packet flows: duration ≈ 0
     #  - Multiple packets: duration cannot be 0
     # ---------------------------------------------------------
+    if row["duration"] < 0:
+            errors.append("duration < 0")
     if row["packet_count"] == 1 and row["duration"] > 0.001:
         errors.append("duration > 0 for packet_count=1")
     if row["packet_count"] > 1 and row["duration"] == 0:
         errors.append("duration=0 but multiple packets exist")
+        
+    # updated: Outlier duration check: multi-packet flows > 1 hour
+    if row["duration"] > 3600:
+        errors.append("flow duration unusually long (>1 hour)")
     # ---------------------------------------------------------
     # Protocol-Port Sanity Rules
     #  - DNS (port 53): duration should be short (<10s)
