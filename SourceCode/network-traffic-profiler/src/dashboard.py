@@ -110,6 +110,14 @@ if src_ports:
 if dst_ports:
     filtered = filtered[filtered["dst_port"].isin(dst_ports)]
 
+# Table View Filters
+st.sidebar.header("Table Display Options")
+
+show_top_endpoints = st.sidebar.checkbox("Top Endpoints", value=True)
+show_flow_table = st.sidebar.checkbox("All Flows", value=True)
+show_anomalous_table = st.sidebar.checkbox("Anomalous Flows", value=True)
+show_invalid_flows = st.sidebar.checkbox("Invalid Flows", value=True)
+
 # Dashboard visualisation section
 
 # Anomaly summary
@@ -142,27 +150,52 @@ fig_time = px.bar(
 st.plotly_chart(fig_time, use_container_width=True)
 
 # Table
-st.subheader("Flow Table")
+# Top Endpoints Table
+if show_top_endpoints:
+    st.subheader("Top Endpoints")
+    endpoints_df = (
+        filtered.groupby(["src_ip", "dst_ip"])["byte_count"]
+        .sum()
+        .reset_index()
+        .sort_values(by="byte_count", ascending=False)
+        .head(20)
+    )
+    st.dataframe(endpoints_df, use_container_width=True)
 
-table_cols = [
-    "src_ip", "dst_ip",
-    "src_port", "dst_port",
-    "protocol", "protocol_name",
-    "packet_count", "byte_count",
-    "avg_packet_size",
-    "first_packet_index", "last_packet_index",
-    "duration"
-]
+# All Flows Table
+if show_flow_table:
+    st.subheader("All Flows Table")
 
-st.dataframe(filtered[table_cols], use_container_width=True)
+    table_cols = [
+      "src_ip", "dst_ip",
+      "src_port", "dst_port",
+      "protocol", "protocol_name",
+      "packet_count", "byte_count",
+      "avg_packet_size",
+      "first_packet_index", "last_packet_index",
+      "duration"
+    ]
+    st.dataframe(filtered[table_cols], use_container_width=True)
 
-# Anomalous flows
-st.subheader("Anomalous Flows")
+# Anomalous Flows Table
+if show_anomalous_table:
+    st.subheader("Anomalous Flows")
 
-numeric_df = st.session_state.numeric_df
-anomalous = numeric_df[numeric_df["anomaly"] == True]
+    numeric_df = st.session_state.numeric_df
+    anomalous = numeric_df[numeric_df["anomaly"] == True]
 
-if anomalous.empty:
-    st.info("No anomalous flows detected")
-else:
-    st.dataframe(anomalous, use_container_width=True)
+    if anomalous.empty:
+      st.info("No anomalous flows detected")
+    else:
+      st.dataframe(anomalous, use_container_width=True)
+      
+# Invalid Flows Table    
+if show_invalid_flows:
+    st.subheader("Invalid Flows")
+    invalid_flows = st.session_state.flows[st.session_state.flows["is_valid"] == False]
+    
+    if invalid_flows.empty:
+        st.info("No invalid flows detected")
+    else:
+        cols = ["error_reason"] + [c for c in invalid_flows.columns if c not in ("error_reason", "is_valid")] 
+        st.dataframe(invalid_flows[cols], use_container_width=True)
