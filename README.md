@@ -1,6 +1,3 @@
-[![Review Assignment Due Date](https://classroom.github.com/assets/deadline-readme-button-22041afd0340ce965d47ae6ef1cefeee28c7c493a6346c4f15d667ab976d596c.svg)](https://classroom.github.com/a/xGnTrW1S)
-[![Open in Codespaces](https://classroom.github.com/assets/launch-codespace-2972f46106e565e64193e422d61a12cf1da4916b45550586e14ef0a7c637dd04.svg)](https://classroom.github.com/open-in-codespaces?assignment_repo_id=20873272)
-
 # Network Traffic Profiler Dashboard
 An interactive dashboard that helps non-experts understand network traffic from PCAP files through automated classification and visualisation.
 
@@ -12,15 +9,18 @@ An interactive dashboard that helps non-experts understand network traffic from 
 - Widely supported open-source Python libraries
 
 ## Requirements
-**Python 3.10+**\
-**Virtual Environment (venv)**\
+**Python 3.11**\
+**Virtual Environment (venv)**  
 
 ## Installation
 Navigate to the /src folder
 
 ### 1. Create and activate a virtual environment
-`python -m venv venv`\
-`venv\Scripts\activate`
+`python3.11 -m venv venv`  
+Windows:
+`venv\Scripts\activate`  
+macOS:
+`source venv/bin/activate`
 
 ### 2. Install dependencies
 `pip install -r requirements.txt`
