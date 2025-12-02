@@ -8,7 +8,7 @@ import os
 
 def build_dataset(df, pcap_basename):
 
-    print(f"Building ML dataset") # confirm csv file that is being passed into function
+    print("Building ML dataset") # confirm csv file that is being passed into function
 
     # 1. keep only valid rows from process_dataset.py
     df = df[df["is_valid"] == True] # filter out invalid or corrupted flows
@@ -42,10 +42,12 @@ def build_dataset(df, pcap_basename):
     scaled = scaler.fit_transform(numeric_df) # calculates mean and std for each column, then returns the scaled version
 
     # 6. save scaled data as npy file (binary matrix format), ready to be passed to the model to be trained
-    npy_file = "npy_output/" + pcap_basename + ("_scaled.npy") # create new .npy file with same base name as the pcap file
-    np.save(npy_file, scaled) # saves the scaled numpy array to npy file
 
-    print(f"Scaled dataset saved to {npy_file}")
+    # npy file creation in sem 2
+    #npy_file = "npy_output/" + pcap_basename + ("_scaled.npy") # create new .npy file with same base name as the pcap file
+    #np.save(npy_file, scaled) # saves the scaled numpy array to npy file
+    #print(f"Scaled dataset saved to {npy_file}")
+
     print(f"Shape: {scaled.shape}") # binary matrix preview
 
     # 7. simple anomaly preview
@@ -64,5 +66,16 @@ def build_dataset(df, pcap_basename):
         print("Anomaly level within expected range")
 
     print("Dataset ready for ML") # cleaned and scaled dataset ready to be passed through model
+    
+    # add column for anomaly results to numeric_df for dashboard prototype
+    numeric_df["anomaly"] = (preds == -1)
 
-    return npy_file # build_dataset() returns npy_file
+    # dictionary to hold anomaly info for dashboard prototype
+    anomaly_info = {
+        "anomaly_count": int(anomalies),
+        "total_flows": int(len(preds)),
+        "anomaly_percentage": float(anomalies / len(preds) * 100),
+    }
+
+    return numeric_df, anomaly_info # for dashboard prototype
+    # return only .npy file in sem 2 for ML model

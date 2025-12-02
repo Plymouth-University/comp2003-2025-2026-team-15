@@ -45,11 +45,13 @@ else:
         temp.write(uploaded_file.read())
         # Run pipeline passing through the temporary file
         with st.spinner("Processing PCAP…"):
-            flows_df = load_dataset(temp.name)
+            flows_df, numeric_df, anomaly_info = load_dataset(temp.name)
 
         # Update session state to track uploaded file
         st.session_state.flows = flows_df
         st.session_state.uploaded_file_name = uploaded_file.name
+        st.session_state.numeric_df = numeric_df
+        st.session_state.anomaly_info = anomaly_info
 
 # Copy the extracted data into a dataframe
 df = st.session_state.flows.copy()
@@ -108,6 +110,19 @@ if src_ports:
 if dst_ports:
     filtered = filtered[filtered["dst_port"].isin(dst_ports)]
 
+# Dashboard visualisation section
+
+# Anomaly summary
+if st.session_state.anomaly_info is not None:
+    info = st.session_state.anomaly_info
+
+    st.subheader("Anomaly Detection Summary")
+
+    col1, col2, col3 = st.columns(3)
+    col1.metric("Anomalous Flows", info["anomaly_count"])
+    col2.metric("Total Flows", info["total_flows"])
+    col3.metric("Anomaly %", f"{info['anomaly_percentage']:.2f}%")
+
 # Packet per protocol bar chart
 st.subheader("Packet Count per Protocol")
 fig1 = px.bar(filtered, x="protocol_name", y="packet_count")
@@ -140,3 +155,14 @@ table_cols = [
 ]
 
 st.dataframe(filtered[table_cols], use_container_width=True)
+
+# Anomalous flows
+st.subheader("Anomalous Flows")
+
+numeric_df = st.session_state.numeric_df
+anomalous = numeric_df[numeric_df["anomaly"] == True]
+
+if anomalous.empty:
+    st.info("No anomalous flows detected")
+else:
+    st.dataframe(anomalous, use_container_width=True)
