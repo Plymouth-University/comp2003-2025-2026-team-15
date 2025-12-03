@@ -118,6 +118,16 @@ show_flow_table = st.sidebar.checkbox("All Flows", value=True)
 show_anomalous_table = st.sidebar.checkbox("Anomalous Flows", value=True)
 show_invalid_flows = st.sidebar.checkbox("Invalid Flows", value=True)
 
+# CSV Download
+
+st.sidebar.header("Download Data")
+st.sidebar.download_button(
+    label="Download Filtered CSV",
+    data=filtered.to_csv(index=False).encode("utf-8"),
+    file_name="filtered_flows.csv",
+    mime="text/csv"
+)
+
 # Dashboard visualisation section
 
 # Anomaly summary
