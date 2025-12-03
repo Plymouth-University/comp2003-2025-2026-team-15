@@ -172,6 +172,33 @@ if show_top_endpoints:
     )
     st.dataframe(endpoints_df, use_container_width=True)
 
+# Add IP-pair conversation key
+df["conversation"] = df.apply(
+    lambda r: tuple(sorted([r["src_ip"], r["dst_ip"]])),
+    axis=1
+)
+st.subheader("Top Conversations")
+# Group by conversation pair
+top_conversations = (
+    df.groupby("conversation")
+    .agg(
+        total_bytes=("byte_count", "sum"),
+        total_packets=("packet_count", "sum"),
+        avg_packet_size=("avg_packet_size", "mean"),
+        flow_count=("conversation", "count"),
+    )
+    .sort_values(by="total_bytes", ascending=False)
+    .reset_index()
+)
+
+# Split pair into individual columns for display
+top_conversations["Source IP"] = top_conversations["conversation"].apply(lambda x: x[0])
+top_conversations["Dest IP"] = top_conversations["conversation"].apply(lambda x: x[1])
+
+top_conversations = top_conversations[
+    ["ip_a", "ip_b", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
+]
+st.dataframe(top_conversations.head(10), use_container_width=True)
 # All Flows Table
 if show_flow_table:
     st.subheader("All Flows Table")
