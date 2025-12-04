@@ -190,15 +190,14 @@ top_conversations = (
     .sort_values(by="total_bytes", ascending=False)
     .reset_index()
 )
-
 # Split pair into individual columns for display
 top_conversations["Source IP"] = top_conversations["conversation"].apply(lambda x: x[0])
 top_conversations["Dest IP"] = top_conversations["conversation"].apply(lambda x: x[1])
-
 top_conversations = top_conversations[
-    ["ip_a", "ip_b", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
+    ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
 ]
 st.dataframe(top_conversations.head(10), use_container_width=True)
+
 # All Flows Table
 if show_flow_table:
     st.subheader("All Flows Table")
