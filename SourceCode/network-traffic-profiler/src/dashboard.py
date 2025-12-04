@@ -29,16 +29,63 @@ if "uploaded_file_name" not in st.session_state:
 if "df" not in st.session_state:
     st.session_state.df = None
 
+# Initialise session state for file upload status
+if "flows" not in st.session_state:
+    st.session_state.flows = None
+if "file_pending_upload" not in st.session_state:
+    st.session_state.file_pending_upload = False
+if "current_file" not in st.session_state:
+    st.session_state.current_file = None
+
 # PCAP File Upload
 st.sidebar.header("File Upload")
 uploaded_file = st.sidebar.file_uploader("Upload a .pcap/.pcapng file", type=["pcap", "pcapng"], accept_multiple_files=False)
 # If no file has been uploaded, stop the app
 if uploaded_file is None:
     st.info("Upload a PCAP file to start!")
+
+    # Legal notice for user to upload data only under compliance with UK law
+    st.markdown(
+    """
+    <div style="
+        background-color:#A63037;
+        padding:16px;
+        border-radius:8px;
+    ">
+        <p style="color:#FFFFFF; font-size:16px; line-height:1.5;">
+        <b>Legal Notice</b><br><br>
+        When analysing network traffic, you must have permission to capture and inspect the data.<br><br>  
+        Analysing traffic that you did not generate, or do not have consent to inspect, may breach 
+        UK laws relating to the acquisition, interception, or handling of communication of data under 
+        the <b>Investigatory Powers Act 2016 (IPA)</b>.<br><br>
+        You should only analyse data captured from your <b>own personal network</b>, and data 
+        that <b>does not include other people's information</b>, unless they have explicitly agreed.
+        </p>
+    </div>
+    """,
+    unsafe_allow_html=True
+    )
     st.stop()
-else:
-    # If a new file has been uploaded, run the pipeline
-    if uploaded_file.name != st.session_state.uploaded_file_name:
+
+# If user selects new file, reset state to prompt for confirmation again
+if uploaded_file != st.session_state.current_file:
+    st.session_state.current_file = uploaded_file
+    st.session_state.file_pending_upload = True
+    st.session_state.flows = None # Clear old results
+
+# Checkbox to confirm ownership/authorisation
+if st.session_state.file_pending_upload:
+    confirm = st.sidebar.checkbox("I confirm that I own or am authorised to analyse this PCAP file (required)")
+
+    # Button to upload PCAP file
+    upload_clicked = st.sidebar.button("Process PCAP")
+
+    if upload_clicked and not confirm:
+        st.error("You must confirm that you are authorised to analyse this PCAP file before proceeding.")
+        st.stop()
+
+    # If the user checked the box and clicked the button, process the file
+    if confirm and upload_clicked:
         # Write to a temporary file as web applications cannot access
         # local files on a computer
         temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pcap")
@@ -52,6 +99,15 @@ else:
         st.session_state.uploaded_file_name = uploaded_file.name
         st.session_state.numeric_df = numeric_df
         st.session_state.anomaly_info = anomaly_info
+
+        # Mark file as processed, hides checkbox & button
+        st.session_state.file_pending_upload = False
+        st.rerun() # Immediate refresh
+
+# If still no processed data, stop here
+if st.session_state.flows is None:
+    st.info("Please confirm to process the uploaded PCAP file.")
+    st.stop()
 
 # Copy the extracted data into a dataframe
 df = st.session_state.flows.copy()
