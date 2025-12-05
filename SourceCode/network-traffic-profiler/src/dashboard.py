@@ -170,6 +170,7 @@ if dst_ports:
 st.sidebar.header("Table Display Options")
 
 show_top_endpoints = st.sidebar.checkbox("Top Endpoints", value=True)
+show_top_conversations = st.sidebar.checkbox("Top Conversations", value=True)
 show_flow_table = st.sidebar.checkbox("All Flows", value=True)
 show_anomalous_table = st.sidebar.checkbox("Anomalous Flows", value=True)
 show_invalid_flows = st.sidebar.checkbox("Invalid Flows", value=True)
@@ -228,31 +229,34 @@ if show_top_endpoints:
     )
     st.dataframe(endpoints_df, use_container_width=True)
 
+# Top Conversations Table 
 # Add IP-pair conversation key
 df["conversation"] = df.apply(
     lambda r: tuple(sorted([r["src_ip"], r["dst_ip"]])),
     axis=1
 )
-st.subheader("Top Conversations")
-# Group by conversation pair
-top_conversations = (
-    df.groupby("conversation")
-    .agg(
-        total_bytes=("byte_count", "sum"),
-        total_packets=("packet_count", "sum"),
-        avg_packet_size=("avg_packet_size", "mean"),
-        flow_count=("conversation", "count"),
+
+if show_top_conversations:
+    st.subheader("Top Conversations")
+    # Group by conversation pair
+    top_conversations = (
+        df.groupby("conversation")
+        .agg(
+            total_bytes=("byte_count", "sum"),
+            total_packets=("packet_count", "sum"),
+            avg_packet_size=("avg_packet_size", "mean"),
+            flow_count=("conversation", "count"),
+        )
+        .sort_values(by="total_bytes", ascending=False)
+        .reset_index()
     )
-    .sort_values(by="total_bytes", ascending=False)
-    .reset_index()
-)
-# Split pair into individual columns for display
-top_conversations["Source IP"] = top_conversations["conversation"].apply(lambda x: x[0])
-top_conversations["Dest IP"] = top_conversations["conversation"].apply(lambda x: x[1])
-top_conversations = top_conversations[
-    ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
-]
-st.dataframe(top_conversations.head(10), use_container_width=True)
+    # Split pair into individual columns for display
+    top_conversations["Source IP"] = top_conversations["conversation"].apply(lambda x: x[0])
+    top_conversations["Dest IP"] = top_conversations["conversation"].apply(lambda x: x[1])
+    top_conversations = top_conversations[
+        ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
+    ]
+    st.dataframe(top_conversations.head(10), use_container_width=True)
 
 # All Flows Table
 if show_flow_table:
