@@ -176,7 +176,6 @@ show_anomalous_table = st.sidebar.checkbox("Anomalous Flows", value=True)
 show_flagged_flows = st.sidebar.checkbox("Flagged Flows", value=True)
 
 # CSV Download
-
 st.sidebar.header("Download Data")
 st.sidebar.download_button(
     label="Download Filtered CSV",
@@ -184,6 +183,32 @@ st.sidebar.download_button(
     file_name="filtered_flows.csv",
     mime="text/csv"
 )
+
+# Convert label names
+LABEL_NAMES = {
+    "src_ip": "Source Address",
+    "dst_ip": "Destination Address",
+    "src_port": "Source Port",
+    "dst_port": "Destination Port",
+    "protocol": "Protocol Number",
+    "protocol_name": "Protocol Name",
+    "packet_count": "Packet Count",
+    "byte_count": "Byte Count",
+    "avg_packet_size": "Average Packet Size",
+    "first_packet_index": "First Packet Index",
+    "last_packet_index": "Last Packet Index",
+    "duration": "Flow Duration (s)",
+    "error_reason": "Error Reason",
+    "anomaly": "Anomaly",
+    "conversation": "Conversation Pair",
+    "total_bytes": "Total Bytes",
+    "total_packets": "Total Packets",
+    "avg_packet_size": "Avg Packet Size",
+    "flow_count": "Flow Count"
+}
+
+def rename_cols(df):
+    return df.rename(columns=LABEL_NAMES)
 
 # Dashboard visualisation section
 
@@ -222,7 +247,8 @@ if show_top_endpoints:
         .sort_values(by="byte_count", ascending=False)
         .head(20)
     )
-    st.dataframe(endpoints_df, use_container_width=True)
+    st.dataframe(rename_cols(endpoints_df), use_container_width=True)
+
 
 # Top Conversations Table 
 # Add IP-pair conversation key
@@ -251,7 +277,8 @@ if show_top_conversations:
     top_conversations = top_conversations[
         ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
     ]
-    st.dataframe(top_conversations.head(10), use_container_width=True)
+    st.dataframe(rename_cols(top_conversations.head(10)), use_container_width=True)
+
     
 # All Flows Table
 if show_flow_table:
@@ -266,7 +293,7 @@ if show_flow_table:
       "first_packet_index", "last_packet_index",
       "duration"
     ]
-    st.dataframe(filtered[table_cols], use_container_width=True)
+    st.dataframe(rename_cols(filtered[table_cols]), use_container_width=True)
 
 # Anomalous Flows Table
 if show_anomalous_table:
@@ -278,7 +305,7 @@ if show_anomalous_table:
     if anomalous.empty:
       st.info("No anomalous flows detected")
     else:
-      st.dataframe(anomalous, use_container_width=True)
+      st.dataframe(rename_cols(anomalous), use_container_width=True)
       
 # Flagged Flows Table    
 if show_flagged_flows:
@@ -289,4 +316,4 @@ if show_flagged_flows:
         st.info("No flagged flows detected")
     else:
         cols = ["error_reason"] + [c for c in invalid_flows.columns if c not in ("error_reason", "is_valid")] 
-        st.dataframe(invalid_flows[cols], use_container_width=True)
+        st.dataframe(rename_cols(invalid_flows[cols]), use_container_width=True)
