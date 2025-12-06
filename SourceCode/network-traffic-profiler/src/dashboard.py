@@ -173,7 +173,7 @@ show_top_endpoints = st.sidebar.checkbox("Top Endpoints", value=True)
 show_top_conversations = st.sidebar.checkbox("Top Conversations", value=True)
 show_flow_table = st.sidebar.checkbox("All Flows", value=True)
 show_anomalous_table = st.sidebar.checkbox("Anomalous Flows", value=True)
-show_invalid_flows = st.sidebar.checkbox("Invalid Flows", value=True)
+show_flagged_flows = st.sidebar.checkbox("Flagged Flows", value=True)
 
 # CSV Download
 
@@ -197,11 +197,6 @@ if st.session_state.anomaly_info is not None:
     col1.metric("Anomalous Flows", info["anomaly_count"])
     col2.metric("Total Flows", info["total_flows"])
     col3.metric("Anomaly %", f"{info['anomaly_percentage']:.2f}%")
-
-# Packet per protocol bar chart
-st.subheader("Packet Count per Protocol")
-fig1 = px.bar(filtered, x="protocol_name", y="packet_count")
-st.plotly_chart(fig1)
 
 # Traffic over time
 st.subheader("Traffic Over Time (Bytes per Packet Index)")
@@ -257,7 +252,7 @@ if show_top_conversations:
         ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
     ]
     st.dataframe(top_conversations.head(10), use_container_width=True)
-
+    
 # All Flows Table
 if show_flow_table:
     st.subheader("All Flows Table")
@@ -285,13 +280,13 @@ if show_anomalous_table:
     else:
       st.dataframe(anomalous, use_container_width=True)
       
-# Invalid Flows Table    
-if show_invalid_flows:
-    st.subheader("Invalid Flows")
+# Flagged Flows Table    
+if show_flagged_flows:
+    st.subheader("Flagged Flows")
     invalid_flows = st.session_state.flows[st.session_state.flows["is_valid"] == False]
     
     if invalid_flows.empty:
-        st.info("No invalid flows detected")
+        st.info("No flagged flows detected")
     else:
         cols = ["error_reason"] + [c for c in invalid_flows.columns if c not in ("error_reason", "is_valid")] 
         st.dataframe(invalid_flows[cols], use_container_width=True)
