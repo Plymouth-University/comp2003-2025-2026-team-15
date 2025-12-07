@@ -13,7 +13,7 @@ def run_pipeline(pcap_path):
     flows = extract_flows(pcap_path)
     # Validate data
     # Second param indicates whether to generate a CSV file
-    validated_data = validate_dataset(flows, False, pcap_basename)
+    validated_data = validate_dataset(flows)
     # Build dataset for ML
     numeric_df, anomaly_info = build_dataset(validated_data, pcap_basename)
     # Return to dashboard
