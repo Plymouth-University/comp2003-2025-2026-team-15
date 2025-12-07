@@ -217,6 +217,7 @@ if st.session_state.anomaly_info is not None:
     info = st.session_state.anomaly_info
 
     st.subheader("Anomaly Detection Summary")
+    st.write("Overview of how many flows were detected as anomalous based on statistical ML rules.")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Anomalous Flows", info["anomaly_count"])
@@ -224,14 +225,14 @@ if st.session_state.anomaly_info is not None:
     col3.metric("Anomaly %", f"{info['anomaly_percentage']:.2f}%")
 
 # Traffic over time
-st.subheader("Traffic Over Time (Bytes per Packet Index)")
+st.subheader("Traffic Volume Over Time (Byte Count)")
+st.write("Visualises how much traffic occurred over time, helping identify spikes, bursts, or unusual peaks in network activity.")
 time_df = filtered.groupby("first_packet_index")["byte_count"].sum().reset_index()
 
 fig_time = px.bar(
     time_df,
     x="first_packet_index",
     y="byte_count",
-    title="Traffic Volume Over Time (Byte Count)"
 )
 
 st.plotly_chart(fig_time, use_container_width=True)
@@ -240,6 +241,7 @@ st.plotly_chart(fig_time, use_container_width=True)
 # Top Endpoints Table
 if show_top_endpoints:
     st.subheader("Top Endpoints")
+    st.write("Shows which IP pairs exchanged the most data. Useful for identifying the busiest devices on the network.")
     endpoints_df = (
         filtered.groupby(["src_ip", "dst_ip"])["byte_count"]
         .sum()
