@@ -44,7 +44,7 @@ ML: **scikit-learn**
 PCAP Upload -> Feature Extraction -> Schema Validation -> Dataset Preparation -> ML -> Dashboard Visualisation
 
 ## Tests
-Basic tests using `pytest` will be included to validate the feature extraction, data processing, and ML pipeline.
+Unit tests are included to validate the feature extraction, data processing and data validation. Run all tests by using the `pytest` command.
 
 ## Contributing
 This project forms part of a larger project, which aims to develop an AI-driven firewall intrusion detection system, designed for small to medium-sized businesses, and will be further developed in the future.
