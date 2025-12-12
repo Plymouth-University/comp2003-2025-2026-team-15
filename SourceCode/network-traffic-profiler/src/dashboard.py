@@ -198,7 +198,7 @@ LABEL_NAMES = {
     "first_packet_index": "First Packet Index",
     "last_packet_index": "Last Packet Index",
     "duration": "Flow Duration (s)",
-    "error_reason": "Error Reason",
+    "error_reason": "Flagged Reason",
     "anomaly": "Anomaly",
     "conversation": "Conversation Pair",
     "total_bytes": "Total Bytes",
