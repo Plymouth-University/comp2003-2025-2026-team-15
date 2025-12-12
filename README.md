@@ -13,12 +13,15 @@ An interactive dashboard that helps non-experts understand network traffic from 
 **Virtual Environment (venv)**  
 
 ## Installation
-Navigate to the /src folder
+Navigate to the /network-traffic-profiler folder
 
 ### 1. Create and activate a virtual environment
+
 `python3.11 -m venv venv`  
+
 Windows:
 `venv\Scripts\activate`  
+
 macOS:
 `source venv/bin/activate`
 
@@ -26,12 +29,14 @@ macOS:
 `pip install -r requirements.txt`
 
 ### 3. Start Streamlit local web app
-`streamlit run dashboard.py`
 
-## Usage
-Examples will be included to demonstrate how to run the dashboard and interpret classification results.
+`streamlit run src/dashboard.py`
+
+## Example Usage
+![Demo](assets/demo.gif)
 
 ## Tech Stack
+Development language: **Python**\
 PCAP parsing: **scapy**\
 Feature extraction: **nfstream**\
 CSV data storage: **pandas**\
