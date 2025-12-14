@@ -198,7 +198,7 @@ LABEL_NAMES = {
     "first_packet_index": "First Packet Index",
     "last_packet_index": "Last Packet Index",
     "duration": "Flow Duration (s)",
-    "error_reason": "Error Reason",
+    "error_reason": "Flagged Reason",
     "anomaly": "Anomaly",
     "conversation": "Conversation Pair",
     "total_bytes": "Total Bytes",
@@ -322,3 +322,23 @@ if show_flagged_flows:
     else:
         cols = ["error_reason"] + [c for c in invalid_flows.columns if c not in ("error_reason", "is_valid")] 
         st.dataframe(rename_cols(invalid_flows[cols]), use_container_width=True)
+
+# plots for visualisiung anomalities in data
+
+# traffic activity comparison: packet vs byte count
+
+st.subheader("Flow Activity Distribution")
+st.write("Packet Count (number of packets in a flow) vs Byte Count (total amount of data transferred).")
+
+x = "packet_count"
+y = "byte_count"
+
+fig = px.scatter(
+    numeric_df,
+    x=x,
+    y=y,
+    color="anomaly",
+    color_discrete_map={True: "red", False: "blue"}
+)
+
+st.plotly_chart(fig, use_container_width=True)

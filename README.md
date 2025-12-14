@@ -13,12 +13,15 @@ An interactive dashboard that helps non-experts understand network traffic from 
 **Virtual Environment (venv)**  
 
 ## Installation
-Navigate to the /src folder
+Navigate to the /network-traffic-profiler folder
 
 ### 1. Create and activate a virtual environment
+
 `python3.11 -m venv venv`  
+
 Windows:
 `venv\Scripts\activate`  
+
 macOS:
 `source venv/bin/activate`
 
@@ -26,12 +29,14 @@ macOS:
 `pip install -r requirements.txt`
 
 ### 3. Start Streamlit local web app
-`streamlit run dashboard.py`
 
-## Usage
-Examples will be included to demonstrate how to run the dashboard and interpret classification results.
+`streamlit run src/dashboard.py`
+
+## Example Usage
+![Demo](assets/demo.gif)
 
 ## Tech Stack
+Development language: **Python**\
 PCAP parsing: **scapy**\
 Feature extraction: **nfstream**\
 CSV data storage: **pandas**\
@@ -44,7 +49,7 @@ ML: **scikit-learn**
 PCAP Upload -> Feature Extraction -> Schema Validation -> Dataset Preparation -> ML -> Dashboard Visualisation
 
 ## Tests
-Basic tests using `pytest` will be included to validate the feature extraction, data processing, and ML pipeline.
+Unit tests are included to validate the feature extraction, data processing and data validation. Run all tests by using the `pytest` command.
 
 ## Contributing
 This project forms part of a larger project, which aims to develop an AI-driven firewall intrusion detection system, designed for small to medium-sized businesses, and will be further developed in the future.

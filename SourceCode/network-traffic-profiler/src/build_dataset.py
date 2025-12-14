@@ -2,7 +2,7 @@
 
 import pandas as pd
 import numpy as np
-from sklearn.preprocessing import StandardScaler
+from sklearn.preprocessing import RobustScaler
 from sklearn.ensemble import IsolationForest
 import os
 
@@ -15,8 +15,8 @@ def build_dataset(df, pcap_basename):
     print(f"Valid rows: {len(df)}") # number of usable flows for ML
 
     # print warning if not enough valid flows
-    if len(df) < 5:
-        print("WARNING: Very few valid flows - ML may be unreliable")
+    if len(df) < 50:
+        print("WARNING: Very few valid flows - anomaly detection may be unreliable")
 
     # 2. drop/ignore columns not useful for ML (kept for dashboard)
     drop_cols = ["src_ip", "dst_ip", "protocol_name", "error_reason", "is_valid"] # do not contain useful information
@@ -24,13 +24,18 @@ def build_dataset(df, pcap_basename):
 
     # 3. select numeric fields only (ML can't understand non-numeric fields)
     numeric_df = df.select_dtypes(include=[np.number])
+    # NaN value check and handling
+    numeric_df = numeric_df.replace([np.inf, -np.inf], np.nan) # replace infinite values
+    if numeric_df.isna().any().any(): # check if there are any NaN values
+        numeric_df = numeric_df.fillna(numeric_df.median())  # fill NaN values with column mean
+        print("NaN values detected and filled with column mean")
     # confirm numeric features and their amount
     print(f"Numeric features: {list(numeric_df.columns)}")
     print(f"Count: {numeric_df.shape[1]}")
 
     # 4. check for zero-variance features (column where every value is the same -> no variation -> no valuable information)
     stds = numeric_df.std() # calculate standard deviation (variation from mean) for each column
-    zero_var = stds[stds == 0] # zero-variance feature when standard deviation is 0
+    zero_var = stds[stds < 1e-8] # zero-variance feature when standard deviation is 0, protect from floating point errors 
 
     if len(zero_var) > 0: # if there are any zero_vars
         print("Zero-variance features detected and removed:")
@@ -38,7 +43,7 @@ def build_dataset(df, pcap_basename):
         numeric_df = numeric_df.drop(columns=zero_var.index) # drops (removes) columns with zero-variation values
 
     # 5. scale values (normalise feature ranges so the model doesn't treat large-number features as more important)
-    scaler = StandardScaler() # in-built scikit-learn feature
+    scaler = RobustScaler() # in-built scikit-learn feature
     scaled = scaler.fit_transform(numeric_df) # calculates mean and std for each column, then returns the scaled version
 
     # 6. save scaled data as npy file (binary matrix format), ready to be passed to the model to be trained
@@ -50,8 +55,8 @@ def build_dataset(df, pcap_basename):
 
     print(f"Shape: {scaled.shape}") # binary matrix preview
 
-    # 7. simple anomaly preview
-    model = IsolationForest().fit(scaled) # using isolationforest algorithm -> unsupervised algorithm -> good for isolating unusual points (anomaly detection)
+    # 7. simple anomaly preview using isolationforest algorithm -> unsupervised algorithm -> good for isolating unusual points (anomaly detection)
+    model = IsolationForest(n_estimators=200, contamination=0.1, random_state=42).fit(scaled) # isolationforest with 200 trees, averaging their results, assuming 10% of data is anomalous
     preds = model.predict(scaled) # apply model to the scaled data and return predicted 1/-1 values (anormal/normal)
     anomalies = np.sum(preds == -1) # print amount of flows (rows) that are flagged as anomaly
 
