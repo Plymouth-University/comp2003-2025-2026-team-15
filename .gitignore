@@ -3,4 +3,3 @@ SourceCode/network-traffic-profiler/src/__pycache__
 SourceCode/network-traffic-profiler/src/tests/__pycache__
 *.pcap
 *.pcapng
-*.pkl
