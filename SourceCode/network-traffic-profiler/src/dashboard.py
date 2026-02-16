@@ -204,7 +204,8 @@ LABEL_NAMES = {
     "total_bytes": "Total Bytes",
     "total_packets": "Total Packets",
     "avg_packet_size": "Avg Packet Size",
-    "flow_count": "Flow Count"
+    "flow_count": "Flow Count",
+    "action_type": "User Action Type" 
 }
 
 def rename_cols(df):
@@ -285,18 +286,21 @@ if show_top_conversations:
     
 # All Flows Table
 if show_flow_table:
-    st.subheader("All Flows Table")
-    st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol.")
-    table_cols = [
-      "src_ip", "dst_ip",
-      "src_port", "dst_port",
-      "protocol", "protocol_name",
-      "packet_count", "byte_count",
-      "avg_packet_size",
-      "first_packet_index", "last_packet_index",
-      "duration"
-    ]
-    st.dataframe(rename_cols(filtered[table_cols]), use_container_width=True)
+        st.subheader("All Flows Table")
+        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol.")
+        table_cols = [
+            "src_ip", "dst_ip",
+            "src_port", "dst_port",
+            "protocol", "protocol_name",
+            "packet_count", "byte_count",
+            "avg_packet_size",
+            "first_packet_index", "last_packet_index",
+            "duration",
+            "action_type" # Add action_type column
+        ]
+        # Only show action_type if present
+        display_cols = [col for col in table_cols if col in filtered.columns]
+        st.dataframe(rename_cols(filtered[display_cols]), use_container_width=True)
 
 # Anomalous Flows Table
 if show_anomalous_table:
