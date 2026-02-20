@@ -12,6 +12,7 @@ from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
 from sklearn.ensemble import RandomForestClassifier
 from sklearn.metrics import classification_report, accuracy_score
+from test_model import run_tests
 
 # load dataset created in /action_classification
 df = pd.read_csv("action_classification/master_training_data.csv")
@@ -53,3 +54,5 @@ joblib.dump(model, "traffic_model.pkl")
 joblib.dump(label_encoder, "label_encoder.pkl")
 
 print("\nModel saved") # meaning .pkl files have been created and can be used now in predict.py
+
+run_tests(model=model, label_encoder=label_encoder, X_train=X_train, X_test=X_test, y_train=y_train, y_test=y_test, df=df)
