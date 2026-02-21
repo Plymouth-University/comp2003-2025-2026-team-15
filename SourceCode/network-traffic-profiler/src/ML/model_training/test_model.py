@@ -230,6 +230,7 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     print("\nMisclassified samples:")
     print(misclassified.head(20)) # the first 20 misclassified rows
     # print(misclassified) # all misclassified rows
+    print(f"Total samples: {len(errors)}")
     print(f"Total misclassified: {len(misclassified)}") # Total number of misclassified samples
 
     # 16) Unknown/unseen label handling
@@ -244,4 +245,5 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     print("\n[test 17] General Sanity check (first 5 rows of features):")
     print(X_test.head())
     
+
     print("\n--- Testing complete ---")
