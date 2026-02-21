@@ -10,7 +10,7 @@ import pandas as pd
 # Import ML prediction function
 from ML.model_training.predict import predict_action_type
 # Import ML feature extraction
-from ML.action_classification.extract_features import extract_ml_features
+from ML.action_classification.extract_ml_features import extract_ml_features
 
 
 def run_pipeline(pcap_path):
@@ -29,27 +29,22 @@ def run_pipeline(pcap_path):
 
   
     if not ml_features_df.empty:
-        print("Predicting actions...")
+        print("Predicting actions for flows...")
         try:
             # Predict action type for each flow
             ml_features_df = predict_action_type(ml_features_df)
             
-            # Check if prediction succeeded and column exists
-            if 'action_type' in ml_features_df.columns:
-                predicted_action = ml_features_df['action_type'].iloc[0]
-            else:
-                predicted_action = "Classification Failed"
+            validated_data = validated_data.merge(ml_features_df[['flow_id', 'action_type']], on='flow_id', how='left')
+        
+            # Fill non youtube related flows
+            validated_data['action_type'] = validated_data['action_type'].fillna('Non-YouTube')
         except Exception as e:
             print(f"Prediction error: {e}")
-            predicted_action = "Prediction Error"
+            validated_data['action_type'] = "Prediction Error"
     else:
         # If extraction failed
         print("Warning: No ML features extracted.")
-        predicted_action = "Unknown / No IP Traffic"
-
-    # Merge action_type back to validated_data
-    validated_data = validated_data.copy()
-    validated_data["action_type"] = predicted_action
+        validated_data['action_type'] = "Unknown / No IP Traffic"
 
     # Build dataset for ML
     numeric_df, anomaly_info = build_dataset(validated_data, pcap_basename)
