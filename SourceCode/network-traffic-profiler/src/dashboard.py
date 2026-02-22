@@ -213,6 +213,46 @@ def rename_cols(df):
 
 # Dashboard visualisation section
 
+# Activity Analysis 
+st.header("Activity Analysis")
+col_a, col_b = st.columns(2) # two side by side columns 
+
+# pie chart
+with col_a:
+    st.subheader("Traffic Composition")
+    pie_df = filtered.groupby("action_type", dropna=False)["byte_count"].sum().reset_index()
+    if not pie_df.empty:
+        fig_pie = px.pie(
+            pie_df,
+            values="byte_count",
+            names="action_type",
+            hole=0.4,
+            title="Data Volume by Action",
+            color_discrete_sequence=px.colors.qualitative.Safe
+        )
+        st.plotly_chart(fig_pie, use_container_width=True)
+    else:
+        st.info("No actions to display.")
+
+# timeline
+with col_b:
+    st.subheader("Activity Timeline")
+    timeline_df = filtered[filtered["action_type"].notna() & (filtered["action_type"] != "Background Traffic")]
+    if not timeline_df.empty:
+        fig_time = px.scatter(
+            timeline_df,
+            x="first_packet_index",
+            y="action_type",
+            color="action_type",
+            size="byte_count",
+            title="When Actions Occurred",
+            labels={"first_packet_index": "Time (Packet Index)", "action_type": "Action"},
+            color_discrete_sequence=px.colors.qualitative.Safe
+        )
+        st.plotly_chart(fig_time, use_container_width=True)
+    else:
+        st.info("No timeline data available.")
+
 # Anomaly summary
 if st.session_state.anomaly_info is not None:
     info = st.session_state.anomaly_info

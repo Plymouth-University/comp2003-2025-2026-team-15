@@ -21,6 +21,10 @@ def run_pipeline(pcap_path):
     # Second param indicates whether to generate a CSV file
     validated_data = validate_dataset(flows)
 
+    # Assign flow_id to each flow
+    validated_data = validated_data.reset_index(drop=True)
+    validated_data['flow_id'] = validated_data.index
+
     # Extract ML features for each flow 
     print(f"Extracting ML features for {pcap_basename}...")
     
@@ -32,8 +36,9 @@ def run_pipeline(pcap_path):
         print("Predicting actions for flows...")
         try:
             # Predict action type for each flow
-            ml_features_df = predict_action_type(ml_features_df)
-            
+            ml_features_df = extract_ml_features(pcap_path)
+            if not ml_features_df.empty:
+                ml_features_df = predict_action_type(ml_features_df)
             validated_data = validated_data.merge(ml_features_df[['flow_id', 'action_type']], on='flow_id', how='left')
         
             # Fill non youtube related flows

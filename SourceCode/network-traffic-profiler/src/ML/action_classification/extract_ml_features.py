@@ -54,20 +54,19 @@ def extract_ml_features(pcap_file, label=None):
             flow_data[flow_key].append({'ts': ts, 'size': size, 'is_outbound': is_outbound})
 
     all_flow_features = []
-    for flow_key, packet_list in flow_data.items():
+    for i, (flow_key, packet_list) in enumerate(flow_data.items()):
         df = pd.DataFrame(packet_list)
         df['iat'] = df['ts'].diff().fillna(0)
 
+        # keep only features that are used for model training
         features = {
-            "protocol": flow_key[4],
-            "pk_count": len(df),
-            "total_bytes": df['size'].sum(),
-            "avg_pkt_size": df['size'].mean(),
-            "std_pkt_size": df['size'].std() if len(df) > 1 else 0,
-            "max_pkt_size": df['size'].max(),
-            "avg_iat": df['iat'].mean(),
+            "flow_id": i, # unique identifier for each flow
             "duration": df['ts'].max() - df['ts'].min(),
-            "outbound_ratio": df['is_outbound'].mean(),
+            "std_iat": df['iat'].std() if len(df) > 1 else 0,
+            "avg_iat": df['iat'].mean(),
+            "pk_count": len(df),
+            "avg_inbound_size": df[df['is_outbound'] == 0]['size'].mean() if not df[df['is_outbound'] == 0].empty else 0,
+            "avg_outbound_size": df[df['is_outbound'] == 1]['size'].mean() if not df[df['is_outbound'] == 1].empty else 0,
         }
         if label: features['action'] = label
         all_flow_features.append(features)
