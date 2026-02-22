@@ -57,6 +57,7 @@ def extract_ml_features(pcap_file, label=None):
     for i, (flow_key, packet_list) in enumerate(flow_data.items()):
         df = pd.DataFrame(packet_list)
         df['iat'] = df['ts'].diff().fillna(0)
+        
 
         # keep only features that are used for model training
         features = {
@@ -67,6 +68,8 @@ def extract_ml_features(pcap_file, label=None):
             "pk_count": len(df),
             "avg_inbound_size": df[df['is_outbound'] == 0]['size'].mean() if not df[df['is_outbound'] == 0].empty else 0,
             "avg_outbound_size": df[df['is_outbound'] == 1]['size'].mean() if not df[df['is_outbound'] == 1].empty else 0,
+            "total_bytes": df['size'].sum(),
+            "outbound_ratio": df['is_outbound'].mean(),
         }
         if label: features['action'] = label
         all_flow_features.append(features)
