@@ -331,6 +331,7 @@ if show_flow_table:
         table_cols = [
             "src_ip", "dst_ip",
             "src_port", "dst_port",
+            "start_time", "end_time",
             "protocol", "protocol_name",
             "packet_count", "byte_count",
             "avg_packet_size",

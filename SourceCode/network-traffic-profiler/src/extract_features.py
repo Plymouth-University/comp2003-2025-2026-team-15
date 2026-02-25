@@ -88,10 +88,15 @@ def extract_flows(PCAP_FILE):
     df_flows['protocol_name'] = df_flows['protocol'].map(protocol_map).fillna(df_flows['protocol'])
 
 
-    # --- Output Results ---
+    # Calculate start and end time relative to PCAP file, instead of
+    # unix epoch
 
-    # Drop raw timestamps for a cleaner output
-    df_flows = df_flows.drop(columns=["start_time", "end_time"])
+    # Find the earliest timestamp in the entire PCAP
+    pcap_start_time = df_flows["start_time"].min()
+
+    # Subtract that global start time from all start and end times
+    df_flows["start_time"] = df_flows["start_time"] - pcap_start_time
+    df_flows["end_time"] = df_flows["end_time"] - pcap_start_time
 
     print(f"\nFlow extraction complete. Generated {len(df_flows)} unique flows.")
     return df_flows
