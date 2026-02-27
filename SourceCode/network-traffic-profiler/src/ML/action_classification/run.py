@@ -2,12 +2,15 @@ import pandas as pd
 import os
 import glob
 from extract_ml_features import extract_ml_features
+import time
+
 
 data_dir = "datasets/"
 actions = ["Like", "Play", "Subscribe", "Comment", "Search"]
 all_rows = []
 
 print("Beginning extraction...")
+start = time.time()
 for i,action in enumerate(actions):
     print(f"\nExtracting features from {action} dataset ({i+1}/{len(actions)})")
     folder_path = os.path.join(data_dir, action)
@@ -18,7 +21,7 @@ for i,action in enumerate(actions):
     for index, full_path in enumerate(pcap_files):
         filename = os.path.basename(full_path)
         count = index+1
-        print(f"\rProcessing: {count}/{total_files} ({filename})".ljust(50), end="")
+        print(f"\r{round(time.time()-start)}s | Processing: {count}/{total_files} ({filename})".ljust(50), end="")
         
         # Extract ALL flows from this PCAP into a dataframe
         df_flows = extract_ml_features(full_path)
