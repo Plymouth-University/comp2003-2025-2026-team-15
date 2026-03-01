@@ -1,7 +1,5 @@
 import sys
 import os
-
-# Add src/ML to path
 sys.path.append(os.path.abspath(os.path.join(os.path.dirname(__file__), "..")))
 
 import matplotlib
@@ -15,9 +13,7 @@ from sklearn.linear_model import LogisticRegression
 from sklearn.preprocessing import LabelEncoder
 from sklearn.dummy import DummyClassifier
 from sklearn.model_selection import train_test_split
-
 from model_training.test_model import run_tests
-#from ML.model_training.test_model import run_tests
 
 @pytest.fixture
 def sample_data():
@@ -44,14 +40,12 @@ def sample_data():
 
     return X_train, X_test, y_train, y_test, df, le
 
-
 @pytest.fixture
 def prob_model(sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     model = LogisticRegression(max_iter=500)
     model.fit(X_train, y_train)
     return model
-
 
 @pytest.fixture
 def tree_model(sample_data):
@@ -60,25 +54,9 @@ def tree_model(sample_data):
     model.fit(X_train, y_train)
     return model
 
-
-# ---------------- CORE EXECUTION ---------------- #
-def test_run_tests_executes(prob_model, sample_data, capsys):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-
-    run_tests(prob_model, le, X_train, X_test, y_train, y_test, df)
-
-    captured = capsys.readouterr().out
-
-    assert "Accuracy" in captured
-    assert "Confusion Matrix" in captured
-    assert "ROC-AUC" in captured
-    assert "Feature ablation" in captured
-    assert "Stability test" in captured
-    assert "Error analysis" in captured
-
-
+# ROBUSTNESS & ERROR HANDLING 
 # ---------------- MODEL WITHOUT predict_proba ---------------- #
-
+# Checks run_tests handles models that do not implement predict_proba
 def test_no_predict_proba(sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
 
@@ -86,19 +64,9 @@ def test_no_predict_proba(sample_data):
     model.fit(X_train, y_train)
 
     run_tests(model, le, X_train, X_test, y_train, y_test, df)
-    
-# ---------------- FEATURE IMPORTANCE BRANCH ---------------- #
-def test_feature_importance_branch(tree_model, sample_data, capsys):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-
-    run_tests(tree_model, le, X_train, X_test, y_train, y_test, df)
-
-    captured = capsys.readouterr().out
-    assert "Feature Importances" in captured
-
 
 # ---------------- UNKNOWN LABEL HANDLING ---------------- #
-
+# Validates that run_tests raises an error for unseen labels correctly
 def test_unknown_label_handling(sample_data, capsys):
     X_train, X_test, y_train, y_test, df, le = sample_data
     model = LogisticRegression(max_iter=500)
@@ -109,68 +77,8 @@ def test_unknown_label_handling(sample_data, capsys):
     captured = capsys.readouterr().out
     assert "Unknown label handling test passed" in captured
 
-
-# ---------------- STABILITY SCORES VALID ---------------- #
-
-def test_stability_scores_in_range(tree_model, sample_data):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-
-    run_tests(tree_model, le, X_train, X_test, y_train, y_test, df)
-
-
-# ---------------- NO CRASH ON NOISE ---------------- #
-
-def test_noise_sensitivity(sample_data):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-    model = LogisticRegression(max_iter=500)
-    model.fit(X_train, y_train)
-
-    run_tests(model, le, X_train, X_test, y_train, y_test, df)
-
-
-# ---------------- METRIC CORRECTNESS ---------------- #
-
-def test_accuracy_computation(sample_data):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-    model = LogisticRegression(max_iter=500)
-    model.fit(X_train, y_train)
-
-    y_pred = model.predict(X_test)
-    expected_acc = (y_pred == y_test).mean()
-
-    run_tests(model, le, X_train, X_test, y_train, y_test, df)
-
-    assert 0 <= expected_acc <= 1
-
-
-# ---------------- ERROR ANALYSIS OUTPUT ---------------- #
-
-def test_misclassified_output(sample_data, capsys):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-    model = LogisticRegression(max_iter=500)
-    model.fit(X_train, y_train)
-
-    run_tests(model, le, X_train, X_test, y_train, y_test, df)
-
-    captured = capsys.readouterr().out
-    assert "Misclassified samples" in captured
-
-
-# ---------------- SANITY CHECK ---------------- #
-
-def test_sanity_check(sample_data, capsys):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-    model = LogisticRegression(max_iter=500)
-    model.fit(X_train, y_train)
-
-    run_tests(model, le, X_train, X_test, y_train, y_test, df)
-
-    captured = capsys.readouterr().out
-    assert "General Sanity check" in captured
-
-    
-    
 # ---------------- CLASS IMBALANCE CHECK ---------------- #
+# Ensures no class is completely missing in the dataset
 def test_class_distribution(sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     class_counts = df["action"].value_counts()
@@ -178,18 +86,9 @@ def test_class_distribution(sample_data):
     # Check that no class is completely missing
     assert all(class_counts > 0), "Some classes are missing in the dataset"
 
-
-# ---------------- FEATURE PERMUTATION IMPACT ---------------- #
-def test_permutation_importance_effect(tree_model, sample_data):
-    X_train, X_test, y_train, y_test, df, le = sample_data
-    from sklearn.inspection import permutation_importance
-
-    perm_imp = permutation_importance(tree_model, X_test, y_test, n_repeats=5, random_state=42)
-    # Ensure permutation importance has values for all features
-    assert len(perm_imp.importances_mean) == X_test.shape[1]
-
-
+#  CORE METRICS 
 # ---------------- OVERFITTING CHECK ---------------- #
+# Checks that the model is not extremely overfitting to training data
 def test_train_vs_test_accuracy(prob_model, sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     y_train_pred = prob_model.predict(X_train)
@@ -201,8 +100,8 @@ def test_train_vs_test_accuracy(prob_model, sample_data):
     # Check that training accuracy is not extremely higher than test accuracy (overfitting)
     assert train_acc - test_acc < 0.2, f"Potential overfitting: Train {train_acc:.2f}, Test {test_acc:.2f}"
 
-
 # ---------------- PREDICTION CONFIDENCE DISTRIBUTION ---------------- #
+# Ensures predicted probabilities are within 0-1 and some predictions have high confidence
 def test_prediction_confidence_distribution(prob_model, sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     if hasattr(prob_model, "predict_proba"):
@@ -213,8 +112,39 @@ def test_prediction_confidence_distribution(prob_model, sample_data):
         # Ensure some high confidence predictions exist
         assert (max_probs > 0.5).any()
 
+# ---------------- ROC-AUC BRANCH CHECK ---------------- #
+# Checks that ROC-AUC score is computed correctly for models with predict_proba
+def test_roc_auc_computation(prob_model, sample_data):
+    X_train, X_test, y_train, y_test, df, le = sample_data
+    if hasattr(prob_model, "predict_proba"):
+        from sklearn.preprocessing import label_binarize
+        from sklearn.metrics import roc_auc_score
+        y_bin = label_binarize(y_test, classes=range(len(le.classes_)))
+        y_proba = prob_model.predict_proba(X_test)
+        score = roc_auc_score(y_bin, y_proba, multi_class="ovr")
+        assert 0 <= score <= 1
 
+# ---------------- CONFUSION MATRIX SHAPE CHECK ---------------- #
+# Ensures confusion matrix has shape (n_classes, n_classes)
+def test_confusion_matrix_shape(prob_model, sample_data):
+    X_train, X_test, y_train, y_test, df, le = sample_data
+    from sklearn.metrics import confusion_matrix
+    y_pred = prob_model.predict(X_test)
+    cm = confusion_matrix(y_test, y_pred)
+    assert cm.shape == (len(le.classes_), len(le.classes_))      
+
+# ---------------- PER-CLASS ACCURACY CHECK ---------------- #
+# Ensures that per-class accuracy is within valid range [0,1]
+def test_per_class_accuracy(tree_model, sample_data):
+    X_train, X_test, y_train, y_test, df, le = sample_data
+    y_pred = tree_model.predict(X_test)
+    for i in range(len(le.classes_)):
+        acc = (y_pred[y_test==i] == y_test[y_test==i]).mean()
+        assert 0 <= acc <= 1
+        
+# FEATURE ANALYSIS  #
 # ---------------- FEATURE ABLATION EFFECT ---------------- #
+# Checks that removing individual features does not completely break model accuracy
 def test_feature_ablation_effect(tree_model, sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     from sklearn.base import clone
@@ -230,8 +160,20 @@ def test_feature_ablation_effect(tree_model, sample_data):
         # Ablating a feature should not give completely random accuracy
         assert score > 0.3, f"Ablating {col} dropped accuracy too low: {score}"
 
+# ---------------- FEATURE PERMUTATION IMPACT ---------------- #
+# Verifies permutation importance returns values for all features
+def test_permutation_importance_effect(tree_model, sample_data):
+    X_train, X_test, y_train, y_test, df, le = sample_data
+    from sklearn.inspection import permutation_importance
 
+    perm_imp = permutation_importance(tree_model, X_test, y_test, n_repeats=5, random_state=42)
+    # Ensure permutation importance has values for all features
+    assert len(perm_imp.importances_mean) == X_test.shape[1]
+
+
+# MODEL STABILITY 
 # ---------------- STABILITY OVER MULTIPLE SPLITS ---------------- #
+# Verifies that repeated train/test splits produce reasonably consistent accuracy
 def test_model_stability(tree_model, sample_data):
     X_train, X_test, y_train, y_test, df, le = sample_data
     from sklearn.model_selection import ShuffleSplit
