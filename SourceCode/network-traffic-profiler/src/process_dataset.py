@@ -233,7 +233,7 @@ def validate_row(row):
 #  - Validates each row using validate_row()
 #  - Adds validation columns to csv ('is_valid' and 'error_reason')
 # =====================================================================
-def validate_dataset(df):
+def validate_dataset(df, make_csv=False, pcap_basename=None):
     #df = pd.read_csv(input_file)
     all_errors = {}
     
