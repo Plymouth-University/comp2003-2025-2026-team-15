@@ -39,13 +39,23 @@ def run_pipeline(pcap_path):
             ml_features_df = extract_ml_features(pcap_path)
             if not ml_features_df.empty:
                 ml_features_df = predict_action_type(ml_features_df)
-            validated_data = validated_data.merge(ml_features_df[['flow_id', 'action_type']], on='flow_id', how='left')
-        
+            
+            # define columns to be merged
+            merge_cols = ["src_ip", "dst_ip", "src_port", "dst_port", "protocol"]
+
+            # merge the data
+            validated_data = validated_data.merge(
+                ml_features_df[merge_cols + ["action_type"]],
+                on=merge_cols,
+                how="left"
+            )
+            
             # Fill non youtube related flows
             validated_data['action_type'] = validated_data['action_type'].fillna('Non-YouTube')
         except Exception as e:
-            print(f"Prediction error: {e}")
-            validated_data['action_type'] = "Prediction Error"
+            print("FULL ERROR:", repr(e)) # print detailed error
+            raise
+
     else:
         # If extraction failed
         print("Warning: No ML features extracted.")

@@ -54,24 +54,45 @@ def extract_ml_features(pcap_file, label=None):
             flow_data[flow_key].append({'ts': ts, 'size': size, 'is_outbound': is_outbound})
 
     all_flow_features = []
-    for i, (flow_key, packet_list) in enumerate(flow_data.items()):
-        df = pd.DataFrame(packet_list)
-        df['iat'] = df['ts'].diff().fillna(0)
-        
 
-        # keep only features that are used for model training
+    for flow_key, packet_list in flow_data.items():
+
+        src_ip, dst_ip, sport, dport, protocol_num = flow_key
+
+        df = pd.DataFrame(packet_list)
+
+        df["iat"] = df["ts"].diff().fillna(0)
+
         features = {
-            "flow_id": i, # unique identifier for each flow
-            "duration": df['ts'].max() - df['ts'].min(),
-            "std_iat": df['iat'].std() if len(df) > 1 else 0,
-            "avg_iat": df['iat'].mean(),
+            # 5-tuple for merging with validated_data in main.py
+            "src_ip": src_ip,
+            "dst_ip": dst_ip,
+            "src_port": sport,
+            "dst_port": dport,
+            "protocol": protocol_num,
+
+            # ML features matching training data
+            "duration": df["ts"].max() - df["ts"].min(),
+            "std_iat": df["iat"].std() if len(df) > 1 else 0,
+            "avg_iat": df["iat"].mean(),
             "pk_count": len(df),
-            "avg_inbound_size": df[df['is_outbound'] == 0]['size'].mean() if not df[df['is_outbound'] == 0].empty else 0,
-            "avg_outbound_size": df[df['is_outbound'] == 1]['size'].mean() if not df[df['is_outbound'] == 1].empty else 0,
-            "total_bytes": df['size'].sum(),
-            "outbound_ratio": df['is_outbound'].mean(),
+            "avg_inbound_size": (
+                df[df["is_outbound"] == 0]["size"].mean()
+                if not df[df["is_outbound"] == 0].empty else 0
+            ),
+            "avg_outbound_size": (
+                df[df["is_outbound"] == 1]["size"].mean()
+                if not df[df["is_outbound"] == 1].empty else 0
+            ),
+
+            # req for labeling in run.py
+            "total_bytes": df["size"].sum(),
+            "outbound_ratio": df["is_outbound"].mean(),
         }
-        if label: features['action'] = label
+
+        if label:
+            features["action"] = label
+
         all_flow_features.append(features)
 
     return pd.DataFrame(all_flow_features)
