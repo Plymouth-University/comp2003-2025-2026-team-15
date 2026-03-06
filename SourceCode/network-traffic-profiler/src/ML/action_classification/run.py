@@ -59,7 +59,7 @@ def run(data_dir=DATA_DIR, actions=ACTIONS):
     # Combine everything into one dataframe
     if all_rows:
         master_df = pd.concat(all_rows, ignore_index=True)
-        master_df.to_csv("master_training_data.csv", index=False)
+        master_df.to_csv("../model_training/master_training_data.csv", index=False)
         print(f"\n\nSuccess! Dataset created with {len(master_df)} total flows")
         print(master_df["action"].value_counts())
         return master_df
