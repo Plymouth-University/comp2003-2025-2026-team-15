@@ -36,7 +36,6 @@ def run_pipeline(pcap_path):
         print("Predicting actions for flows...")
         try:
             # Predict action type for each flow
-            ml_features_df = extract_ml_features(pcap_path)
             if not ml_features_df.empty:
                 ml_features_df = predict_action_type(ml_features_df)
             
