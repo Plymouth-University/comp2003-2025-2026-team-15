@@ -1,0 +1,29 @@
+import os
+import sys
+
+CURRENT_DIR = os.path.dirname(__file__)
+SRC_PATH = os.path.abspath(os.path.join(CURRENT_DIR, "../../"))
+ACTION_PATH = os.path.abspath(os.path.join(CURRENT_DIR, "../action_classification"))
+
+sys.path.append(SRC_PATH)
+sys.path.append(ACTION_PATH)
+
+from action_classification.prepare_dataset import prepare_dataset
+from action_classification.extract_ml_features import extract_ml_features
+
+TEST_PCAP = os.path.abspath(os.path.join(SRC_PATH, "pcap_data", "test.pcap"))
+
+# Ensures the dataset preparation script runs without crashing.
+# This verifies folder scanning and file handling logic.
+def test_prepare_dataset_runs():
+    prepare_dataset()
+    assert True # If no exception occurs, the test passes
+
+# Tests dataset preparation followed by feature extraction.
+# Pipeline: prepare_dataset → extract_ml_features
+def test_prepare_then_extract():
+    prepare_dataset()
+    df = extract_ml_features(TEST_PCAP)
+    
+    # Verify the result is either None or a DataFrame-like object
+    assert df is None or hasattr(df, "columns")
