@@ -18,6 +18,7 @@ from sklearn.model_selection import GroupShuffleSplit, cross_val_score
 
 # load dataset created in /action_classification
 df = pd.read_csv("master_training_data.csv")
+#df = pd.read_csv("../action_classification/master_training_data.csv")
 
 # Strip excess background flows 
 # Create dataframe of action flows
