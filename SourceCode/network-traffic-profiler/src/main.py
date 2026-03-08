@@ -50,7 +50,7 @@ def run_pipeline(pcap_path):
             )
             
             # Fill non youtube related flows
-            validated_data['action_type'] = validated_data['action_type'].fillna('Non-YouTube')
+            validated_data['action_type'] = validated_data['action_type'].fillna('Background')
         except Exception as e:
             print("FULL ERROR:", repr(e)) # print detailed error
             raise
