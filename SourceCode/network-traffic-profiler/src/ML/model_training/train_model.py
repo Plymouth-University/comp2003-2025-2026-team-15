@@ -87,9 +87,9 @@ print("\nClassification Report:\n") # for information see https://scikit-learn.o
 print(classification_report(y_test, y_pred, target_names=label_encoder.classes_))
 
 # save the model, label encoder and model features ensuring features are in correct order
-joblib.dump(model, "action_model.pkl")
-joblib.dump(label_encoder, "label_encoder.pkl")
-joblib.dump(X.columns.tolist(), "model_features.pkl")
+joblib.dump(model, "../action_model.pkl")
+joblib.dump(label_encoder, "../label_encoder.pkl")
+joblib.dump(X.columns.tolist(), "../model_features.pkl")
 
 print("\nModel saved") # meaning .pkl files have been created and can be used now in predict.py
 
