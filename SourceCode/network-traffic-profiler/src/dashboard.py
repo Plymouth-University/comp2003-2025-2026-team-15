@@ -3,6 +3,7 @@
 import streamlit as st
 import pandas as pd
 import plotly.express as px
+import plotly.graph_objects as go
 import main
 import tempfile
 
@@ -216,10 +217,21 @@ def rename_cols(df):
 # Activity Analysis 
 st.header("Activity Analysis")
 col_a, col_b = st.columns(2) # two side by side columns 
+# label colours
+colors = {
+    "Comment": "rgb(255, 107, 107)",
+    "Like": "rgb(255, 169, 77)",
+    "Play": "rgb(255, 212, 59)",
+    "Search": "rgb(105, 219, 124)",
+    "Subscribe": "rgb(177, 151, 252)",
+    "Non-YouTube": "rgb(116, 192, 252)",
+    "Background Traffic": "rgb(90, 160, 220)"
+}
 
 # pie chart
 with col_a:
-    st.subheader("Traffic Composition")
+    st.write("Traffic Composition (Data Transferred per Action)")
+
     pie_df = filtered.groupby("action_type", dropna=False)["byte_count"].sum().reset_index()
     if not pie_df.empty:
         fig_pie = px.pie(
@@ -227,8 +239,8 @@ with col_a:
             values="byte_count",
             names="action_type",
             hole=0.4,
-            title="Data Volume by Action",
-            color_discrete_sequence=px.colors.qualitative.Safe
+            color="action_type",
+            color_discrete_map=colors
         )
         st.plotly_chart(fig_pie, use_container_width=True)
     else:
@@ -236,23 +248,52 @@ with col_a:
 
 # timeline
 with col_b:
-    st.subheader("Activity Timeline")
-    timeline_df = filtered[filtered["action_type"].notna() & (filtered["action_type"] != "Background Traffic")]
-    if not timeline_df.empty:
-        fig_time = px.scatter(
-            timeline_df,
-            x="first_packet_index",
-            y="action_type",
-            color="action_type",
-            size="byte_count",
-            title="When Actions Occurred",
-            labels={"first_packet_index": "Time (Packet Index)", "action_type": "Action"},
-            color_discrete_sequence=px.colors.qualitative.Safe
+    st.write("Activity Timeline (When Action Occured)")
+    
+    # create coloured dots for user actions
+    actions = filtered[
+        filtered["action_type"].notna() &
+        ~filtered["action_type"].isin(["Background Traffic", "Non-YouTube"])
+    ].sort_values("first_packet_index")
+
+    # display non yt data/background traffic as baseline
+    non_youtube = filtered[
+        filtered["action_type"].isin(["Non-YouTube", "Background Traffic"])
+    ].sort_values("first_packet_index")
+
+    if not actions.empty:
+        fig = go.Figure()
+
+        fig.add_trace(go.Scatter(
+            x=non_youtube["first_packet_index"], # when traffic happened (packet number)
+            y=non_youtube["byte_count"], # how much data was transferred in the flow
+            mode="lines", # connect the dots to a line
+            name="Non-YouTube",
+            line={"color": colors["Non-YouTube"], "width": 2},
+            hovertemplate="<b>%{x}</b><br>Non-YouTube Traffic: %{y:.2s}B<extra></extra>" # include only 2 fp
+        ))
+
+        for action, df_action in actions.groupby("action_type"):
+            fig.add_trace(go.Scatter(
+                x=df_action["first_packet_index"],
+                y=df_action["byte_count"],
+                mode="markers", # display actions as dots
+                name=action,
+                hovertemplate=f"<b>%{{x}}</b><br>{action}: %{{y:.2s}}B<extra></extra>",
+                marker={"size": 10, "color": colors.get(action, "white"), "line": {"width": 1, "color": "black"}}
+            ))
+
+        fig.update_layout(
+            xaxis_title="Time (Packet Index)",
+            yaxis_title="Byte Count",
+            yaxis={"rangemode": "nonnegative"}, # prevent neg values
+            legend_title="Action"
         )
-        st.plotly_chart(fig_time, use_container_width=True)
+
+        st.plotly_chart(fig, use_container_width=True)
     else:
         st.info("No timeline data available.")
-
+    
 # Anomaly summary
 if st.session_state.anomaly_info is not None:
     info = st.session_state.anomaly_info
