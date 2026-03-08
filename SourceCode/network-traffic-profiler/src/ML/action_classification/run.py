@@ -31,7 +31,10 @@ def label_flows(df_flows, action):
 def run(data_dir=DATA_DIR, actions=ACTIONS):
 
     all_rows = []
-
+    test_data = {"pcap": [400, 300]}
+    print("Testing CSV output")
+    save_to_csv(test_data)
+    
     print("Beginning extraction...")
     start = time.time()
     for i, action in enumerate(actions):
@@ -58,15 +61,39 @@ def run(data_dir=DATA_DIR, actions=ACTIONS):
 
     # Combine everything into one dataframe
     if all_rows:
-        master_df = pd.concat(all_rows, ignore_index=True)
-        master_df.to_csv("../model_training/master_training_data.csv", index=False)
-        print(f"\n\nSuccess! Dataset created with {len(master_df)} total flows")
+        master_df = save_to_csv(all_rows)
+        output_path="../model_training/master_training_data.csv"
+        print(f"\n\nSuccess! Dataset created at {output_path} with {len(master_df)} total flows")
+        print("Final Label Counts in CSV:")
         print(master_df["action"].value_counts())
+        beep()
         return master_df
     else:
         print("\nNo data was extracted. Check your file paths.")
         return None
 
+def save_to_csv(data, output_path="../model_training/master_training_data.csv"):
+    # Ensure the directory exists
+    try:
+        os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    
+        if isinstance(data, list) and len(data) > 0 and isinstance(data[0], pd.DataFrame):
+            new_df = pd.concat(data, ignore_index=True)
+        else:
+            new_df = pd.DataFrame(data)
+
+        new_df.to_csv(output_path, index=False)
+        return new_df
+    except Exception as e:
+        print(f"Error creating CSV: {e}")
+    
+    print(f"\n\nSuccess! Dataset created at {output_path}")
+
+def beep():
+    import winsound
+    duration = 500
+    freq = 440  
+    winsound.Beep(freq, duration)
 
 if __name__ == "__main__":
     run()
