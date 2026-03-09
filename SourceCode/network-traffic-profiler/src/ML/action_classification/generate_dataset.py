@@ -33,7 +33,8 @@ def run(data_dir=DATA_DIR, actions=ACTIONS):
     all_rows = []
     test_data = {"pcap": [400, 300]}
     print("Testing CSV output")
-    save_to_csv(test_data)
+    if save_to_csv(test_data) is False:
+        return
     
     print("Beginning extraction...")
     start = time.time()
@@ -86,6 +87,8 @@ def save_to_csv(data, output_path="../model_training/master_training_data.csv"):
         return new_df
     except Exception as e:
         print(f"Error creating CSV: {e}")
+        beep()
+        return False
     
     print(f"\n\nSuccess! Dataset created at {output_path}")
 
