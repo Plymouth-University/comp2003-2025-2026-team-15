@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "action_classif
 import pytest
 import pandas as pd
 from unittest.mock import patch
-from run import run, label_flows
+from generate_dataset import run, label_flows
 
 # Build a minimal fake flows DataFrame
 def make_flows(rows):
