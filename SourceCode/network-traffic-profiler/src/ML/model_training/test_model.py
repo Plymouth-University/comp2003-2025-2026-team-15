@@ -5,7 +5,7 @@ Feature analysis : Feature importance, Permutation importance, Feature ablation/
 Model robustness & reliability : Overfitting check, Class imbalance/distribution, Prediction confidence, Noise sensitivity, Stability test
 Error & unseen label analysis : Error analysis: Inspect misclassified samples, Unknown/unseen label handling
 """
-
+import os
 import pandas as pd
 import numpy as np
 from sklearn.model_selection import ShuffleSplit
@@ -13,8 +13,21 @@ from sklearn.metrics import classification_report, confusion_matrix, accuracy_sc
 from sklearn.base import clone
 from sklearn.inspection import permutation_importance
 from sklearn.preprocessing import label_binarize
+import matplotlib
+matplotlib.use("Agg") 
 import matplotlib.pyplot as plt
 
+# Folder name relative to the script
+plot_dir_name = "testing_diagrams"
+script_dir = os.path.dirname(os.path.abspath(__file__))
+plot_dir = os.path.join(script_dir, plot_dir_name)
+
+if not os.path.exists(plot_dir):
+    os.makedirs(plot_dir)
+    print(f"Created folder for saving plots: {plot_dir}")
+else:
+    print(f"Using existing folder for plots: {plot_dir}") 
+    
 """
 Parameters:
 model: trained ML model
@@ -22,8 +35,7 @@ label_encoder: label encoder used to encode targets
 X_train, X_test, y_train, y_test: train/test splits
 df: original DataFrame (needed for some tests)
 """
-    
-def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
+def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df,  save_plots=True, plot_dir=plot_dir):
 
     print("\n--- Running Model Evaluation ---\n")
     
@@ -60,7 +72,10 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     plt.yticks(range(len(label_encoder.classes_)), label_encoder.classes_)
     plt.xlabel("Predicted")
     plt.ylabel("Actual")
-    plt.show()
+    if save_plots:
+        plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, "confusion_matrix.png"))
+    plt.close() 
 
     # 5) ROC-AUC: How well the model distinguishes between classes using probabilities 
     print("\n[Test 5] ROC-AUC Score:")
@@ -87,7 +102,10 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
             plt.ylabel("True Positive Rate")
             plt.legend(loc="lower right")
             plt.grid(True)
-            plt.show()
+            if save_plots:
+                plt.tight_layout()
+                plt.savefig(os.path.join(plot_dir, "roc_curves.png"))
+            plt.close()
         
         except Exception as e:
             print(f"ROC-AUC not computed: {e}")
@@ -126,7 +144,10 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
         plt.barh(feat_importances.index, feat_importances.values)
         plt.title("Feature Importance")
         plt.xlabel("Importance")
-        plt.show()
+        if save_plots:
+            plt.tight_layout()
+            plt.savefig(os.path.join(plot_dir, "feature_importance.png"))
+        plt.close()
 
     # 8) Permutation importance: # measures what happens to accuracy if we shuffle a feature
     # performance drop when feature is shuffled, confirming critical features
@@ -140,7 +161,10 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     plt.barh(perm_importances.index, perm_importances.values)
     plt.title("Permutation Importance")
     plt.xlabel("Importance")
-    plt.show()
+    if save_plots:
+        plt.tight_layout()
+        plt.savefig(os.path.join(plot_dir, "permutation_importance.png"))
+    plt.close()
     
     # 9) Feature ablation/usefulness: removing each feature and retraining to see its impact on model accuracy
     # may need to update/ optimise if more features are added to the dataset 
@@ -189,8 +213,10 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
             plt.text((bins[i]+bins[i+1])/2, count + 1, str(int(count)), ha='center', va='bottom', fontsize=10)
     
         plt.ylim(0, max(counts)*1.2)  # add space for text
-        plt.tight_layout()
-        plt.show()
+        if save_plots:
+            plt.tight_layout()
+            plt.savefig(os.path.join(plot_dir, "prediction_confidence.png"))
+        plt.close()
 
         # Print first 10 sample confidences
         print("\n[Test 12]Prediction confidence (first 10 rows):")
@@ -206,7 +232,7 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
         print(f"Noise {noise_level*100:.1f}% -> Accuracy: {noisy_acc*100:.2f}%")
     
     # 14) Stability test: repeated splits to check model consistency of predictions
-    print("\n[Test 14] Stability test:") 
+    ''' print("\n[Test 14] Stability test:") 
     scores = []
     ss = ShuffleSplit(n_splits=5, test_size=0.33, random_state=42)
     for train_idx, test_idx in ss.split(df.drop(columns=["action", "file_source"])):
@@ -220,7 +246,35 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     
     print("\n\n--- Error & unseen label analysis ---")       
     # Identify mistakes and unseen situations
- 
+    '''
+    # 14) Stability test: repeated splits to check model consistency of predictions
+    print("\n[Test 14] Stability test:")
+
+    scores = []
+    ss = ShuffleSplit(n_splits=5, test_size=0.33, random_state=42)
+
+    # Use only numeric features to avoid issues with IP addresses or filenames
+    X_all = df.select_dtypes(include=[np.number])
+
+    for train_idx, test_idx in ss.split(X_all):
+
+        Xtr = X_all.iloc[train_idx]
+        Xte = X_all.iloc[test_idx]
+
+        ytr = label_encoder.transform(df["action"].iloc[train_idx])
+        yte = label_encoder.transform(df["action"].iloc[test_idx])
+
+        m = clone(model)
+        m.fit(Xtr, ytr)
+        scores.append(accuracy_score(yte, m.predict(Xte)))
+
+    print("\nStability scores:", scores)
+    print("Mean stability:", np.mean(scores))
+
+    print("\n\n--- Error & unseen label analysis ---")
+    # Identify mistakes and unseen situations
+    
+    
     # 15) Error analysis: Inspect misclassified samples
     print("\n[Test 15] Error analysis:")
     errors = X_test.copy()
@@ -245,5 +299,4 @@ def run_tests(model, label_encoder, X_train, X_test, y_train, y_test, df):
     print("\n[test 17] General Sanity check (first 5 rows of features):")
     print(X_test.head())
     
-
     print("\n--- Testing complete ---")
