@@ -204,7 +204,6 @@ LABEL_NAMES = {
     "conversation": "Conversation Pair",
     "total_bytes": "Total Bytes",
     "total_packets": "Total Packets",
-    "avg_packet_size": "Avg Packet Size",
     "flow_count": "Flow Count",
     "action_type": "User Action Type" 
 }

@@ -41,7 +41,7 @@ def validate_ip(ip_str):
     try:
         ipaddress.ip_address(ip_str)
         return True
-    except:
+    except Exception:
         return False
 
 # updated
@@ -49,7 +49,7 @@ def is_private_ip(ip_str):
     try:
         ip_obj = ipaddress.ip_address(ip_str)
         return ip_obj.is_private
-    except:
+    except Exception:
         return False
     
 # =========================

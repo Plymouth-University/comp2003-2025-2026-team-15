@@ -23,10 +23,6 @@ def test_train_model(monkeypatch):
     # mock joblib.dump 
     monkeypatch.setattr("joblib.dump", lambda obj, path: None)
 
-    # import train_model 
-    train_module.run_tests = lambda **kwargs: None  # bypass actual test execution (test_model.py)
-    train_module.__dict__.update({"df": df})  # ensure df exists
-
     # simplified train/test split
     X = df[["duration", "std_iat", "avg_iat", "pk_count", "avg_inbound_size", "avg_outbound_size"]]
     y = df["action"]
