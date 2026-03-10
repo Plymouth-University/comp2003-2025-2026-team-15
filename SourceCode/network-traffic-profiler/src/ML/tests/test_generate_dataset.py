@@ -5,7 +5,7 @@ sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "action_classif
 import pytest
 import pandas as pd
 from unittest.mock import patch
-from generate_dataset import run, label_flows
+from action_classification.generate_dataset import run, label_flows
 
 # Build a minimal fake flows DataFrame
 def make_flows(rows):
@@ -154,9 +154,9 @@ class TestCSVOutput:
 # Section 6: Timing behaviour
 class TestTiming:
 
-    @patch("run.time.time")
-    @patch("run.glob.glob")
-    @patch("run.extract_ml_features")
+    @patch("action_classification.generate_dataset.time.time")
+    @patch("action_classification.generate_dataset.glob.glob")
+    @patch("action_classification.generate_dataset.extract_ml_features")
     def test_elapsed_time_shown_in_output(self, mock_extract, mock_glob, mock_time, capsys):
         # Elapsed seconds from time.time() should appear in the printed output
         mock_time.side_effect = [0, 5]  
@@ -165,15 +165,15 @@ class TestTiming:
             {"total_bytes": 500, "outbound_ratio": 0.8}
         ])
 
-        with patch("run.pd.DataFrame.to_csv"):
+        with patch("action_classification.generate_dataset.pd.DataFrame.to_csv"):
             run(data_dir="datasets/", actions=["Like"])
 
         captured = capsys.readouterr()
         assert "5s" in captured.out
 
-    @patch("run.time.time")
-    @patch("run.glob.glob")
-    @patch("run.extract_ml_features")
+    @patch("action_classification.generate_dataset.time.time")
+    @patch("action_classification.generate_dataset.glob.glob")
+    @patch("action_classification.generate_dataset.extract_ml_features")
     def test_timer_starts_before_loop(self, mock_extract, mock_glob, mock_time):
         # time.time() must be called at least twice — once for start, once inside loop
         mock_time.return_value = 0
@@ -182,7 +182,7 @@ class TestTiming:
             {"total_bytes": 500, "outbound_ratio": 0.8}
         ])
 
-        with patch("run.pd.DataFrame.to_csv"):
+        with patch("action_classification.generate_dataset.pd.DataFrame.to_csv"):
             run(data_dir="datasets/", actions=["Like"])
 
         assert mock_time.call_count >= 2
@@ -190,9 +190,9 @@ class TestTiming:
 # Section 7: run() — full pipeline with mocks
 class TestRunFunction:
 
-    @patch("run.time.time", return_value=0)
-    @patch("run.glob.glob")
-    @patch("run.extract_ml_features")
+    @patch("action_classification.generate_dataset.time.time", return_value=0)
+    @patch("action_classification.generate_dataset.glob.glob")
+    @patch("action_classification.generate_dataset.extract_ml_features")
     def test_run_calls_extract_per_pcap(self, mock_extract, mock_glob, mock_time):
         # run() should call extract_ml_features once per pcap file
         mock_glob.return_value = ["datasets/Like/a.pcap", "datasets/Like/b.pcap"]
@@ -201,14 +201,14 @@ class TestRunFunction:
             {"total_bytes": 500, "outbound_ratio": 0.8}
         ])
 
-        with patch("run.pd.DataFrame.to_csv"):
+        with patch("action_classification.generate_dataset.pd.DataFrame.to_csv"):
             run(data_dir="datasets/", actions=["Like"])
 
         assert mock_extract.call_count == 2
 
-    @patch("run.time.time", return_value=0)
-    @patch("run.glob.glob")
-    @patch("run.extract_ml_features")
+    @patch("action_classification.generate_dataset.time.time", return_value=0)
+    @patch("action_classification.generate_dataset.glob.glob")
+    @patch("action_classification.generate_dataset.extract_ml_features")
     def test_run_returns_none_when_no_files(self, mock_extract, mock_glob, mock_time):
         # run() should return None if no pcap files are found
         mock_glob.return_value = []
@@ -216,9 +216,9 @@ class TestRunFunction:
         result = run(data_dir="datasets/", actions=["Like"])
         assert result is None
 
-    @patch("run.time.time", return_value=0)
-    @patch("run.glob.glob")
-    @patch("run.extract_ml_features")
+    @patch("action_classification.generate_dataset.time.time", return_value=0)
+    @patch("action_classification.generate_dataset.glob.glob")
+    @patch("action_classification.generate_dataset.extract_ml_features")
     def test_run_returns_dataframe_on_success(self, mock_extract, mock_glob, mock_time):
         # run() should return a DataFrame when data is extracted
         mock_glob.return_value = ["datasets/Like/a.pcap"]
@@ -226,7 +226,7 @@ class TestRunFunction:
             {"total_bytes": 500, "outbound_ratio": 0.8}
         ])
 
-        with patch("run.pd.DataFrame.to_csv"):
+        with patch("action_classification.generate_dataset.pd.DataFrame.to_csv"):
             result = run(data_dir="datasets/", actions=["Like"])
 
         assert result is not None

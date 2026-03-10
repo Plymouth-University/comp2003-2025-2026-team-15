@@ -13,8 +13,8 @@ def test_train_model(monkeypatch):
         "pk_count": [10, 20, 10, 30, 25, 15],
         "avg_inbound_size": [100, 200, 150, 120, 180, 160],
         "avg_outbound_size": [150, 250, 180, 130, 220, 170],
-        "action": ["Play", "Like", "Comment"],
-        "file_source": ["a.pcap", "b.pcap", "c.pcap"]
+        "action": ["Play", "Like", "Comment", "Play", "Like", "Comment"],
+        "file_source": ["a.pcap", "b.pcap", "c.pcap", "d.pcap", "e.pcap", "f.pcap"]
     })
 
     # mock pd.read_csv

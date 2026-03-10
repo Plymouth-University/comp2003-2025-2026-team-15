@@ -12,7 +12,7 @@ sys.path.append(ACTION_PATH)
 sys.path.append(MODEL_PATH)
 
 from action_classification.extract_ml_features import extract_ml_features
-from action_classification.run import label_flows
+from action_classification.generate_dataset import label_flows
 from model_training.predict import predict_action_type
 
 # Path to a sample PCAP file used for testing

@@ -2,7 +2,7 @@ import pandas as pd
 import os
 import glob
 import time
-from extract_ml_features import extract_ml_features
+from action_classification.extract_ml_features import extract_ml_features
 
 DATA_DIR = "datasets/"
 ACTIONS = ["Like", "Play", "Subscribe", "Comment", "Search"]
