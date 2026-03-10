@@ -54,6 +54,6 @@ jobs:
 
       - name: Run tests
         run: |
-          pytest SourceCode/network-traffic-profiler/src/tests/ -v \
-            --ignore=SourceCode/network-traffic-profiler/src/venv
+          cd SourceCode/network-traffic-profiler
+          pytest src -v --ignore=src/venv
         continue-on-error: true  # remove this once tests run correctly
