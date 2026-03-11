@@ -1,7 +1,6 @@
 # program entry, combine steps into one pipeline
 # extract features -> validate -> build dataset -> model training -> dashboard visualisation
 
-from extract_features import extract_flows
 from process_dataset import validate_dataset
 from build_dataset import build_dataset
 import os
@@ -10,14 +9,15 @@ import pandas as pd
 # Import ML prediction function
 from ML.model_training.predict import predict_action_type
 # Import ML feature extraction
-from ML.action_classification.extract_ml_features import extract_ml_features
+from extract_features_unified import extract_all_pcap_data
 
 
 def run_pipeline(pcap_path):
     pcap_basename = os.path.splitext(os.path.basename(pcap_path))[0]
     
+    pcap_extraction_results = extract_all_pcap_data(pcap_path)
     # Extract data and identify flows
-    flows = extract_flows(pcap_path)
+    flows = pcap_extraction_results[0]
     # Second param indicates whether to generate a CSV file
     validated_data = validate_dataset(flows)
 
@@ -29,7 +29,7 @@ def run_pipeline(pcap_path):
     print(f"Extracting ML features for {pcap_basename}...")
     
     # Extract ML features for each flow 
-    ml_features_df = extract_ml_features(pcap_path)
+    ml_features_df = pcap_extraction_results[1]
 
   
     if not ml_features_df.empty:
