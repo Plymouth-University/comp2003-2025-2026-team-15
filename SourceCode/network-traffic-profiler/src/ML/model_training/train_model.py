@@ -24,14 +24,26 @@ df = pd.read_csv("master_training_data.csv")
 # Create dataframe of action flows
 actions_df = df[df['action'] != 'Background']
 # Create dataframe of background flows
-background_df = df[df['action'] == 'Background'].sample(n=150, random_state=42)
+background_df = df[df['action'] == 'Background'].sample(n=600, random_state=42)
 
 # Combine them back
 df = pd.concat([actions_df, background_df])
 print(f"New balanced dataset shape: {df['action'].value_counts()}")
 
 # define X and y, features with low permutation importance are not included to reduce overfitting
-X = df[["duration", "std_iat", "avg_iat", "pk_count", "avg_inbound_size", "avg_outbound_size"]]
+X = df[[
+    "duration", 
+    "std_iat", 
+    "avg_iat", 
+    "pk_count", 
+    "max_pkt_size", 
+    "pkt_burst_std", 
+    "pk_count_ratio",
+    "avg_inbound_size", 
+    "avg_outbound_size",
+    "total_bytes",
+    "outbound_ratio"
+]] 
 y = df["action"]
 groups = df["file_source"]
 
