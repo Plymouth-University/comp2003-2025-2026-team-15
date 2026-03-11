@@ -18,9 +18,17 @@ st.title("Network Traffic Dashboard")
 # Only bypasses the cache if func arguments change
 # show_spinner=False prevents a loading spinner from being displayed,
 # of which the content of is un-modifable. A custom spinner is used later.
+# In dashboard.py
 @st.cache_data(show_spinner=False)
 def load_dataset(path):
-    return main.run_pipeline(path)
+    # Create a grouped progress area
+    with st.status("Processing...", state="running", expanded=True) as status:
+        # Pass the status object to the pipeline
+        results = main.run_pipeline(path, status)
+        status.update(label="Processing Complete! Loading results...", state="complete", expanded=False)
+    return results
+
+
 
 # Initialise session state keys
 # These enable the code to check if a new PCAP file has been uploaded
@@ -92,8 +100,8 @@ if st.session_state.file_pending_upload:
         temp = tempfile.NamedTemporaryFile(delete=False, suffix=".pcap")
         temp.write(uploaded_file.read())
         # Run pipeline passing through the temporary file
-        with st.spinner("Processing PCAP…"):
-            flows_df, numeric_df, anomaly_info = load_dataset(temp.name)
+        
+        flows_df, numeric_df, anomaly_info = load_dataset(temp.name)
 
         # Update session state to track uploaded file
         st.session_state.flows = flows_df

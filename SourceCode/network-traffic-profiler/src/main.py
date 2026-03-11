@@ -12,16 +12,17 @@ from ML.model_training.predict import predict_action_type
 from extract_features_unified import extract_all_pcap_data
 
 
-def run_pipeline(pcap_path):
+def run_pipeline(pcap_path, status=None):
     pcap_basename = os.path.splitext(os.path.basename(pcap_path))[0]
-    
+    if status: status.write("1. Extracting network flows")
     pcap_extraction_results = extract_all_pcap_data(pcap_path)
     # Extract data and identify flows
     flows = pcap_extraction_results[0]
-    # Second param indicates whether to generate a CSV file
+    if status: status.write("2. Validating network flows")
     validated_data = validate_dataset(flows)
 
     # Assign flow_id to each flow
+    
     validated_data = validated_data.reset_index(drop=True)
     validated_data['flow_id'] = validated_data.index
 
@@ -33,6 +34,8 @@ def run_pipeline(pcap_path):
 
   
     if not ml_features_df.empty:
+       
+        if status: status.write("3. Predicting user actions")
         print("Predicting actions for flows...")
         try:
             # Predict action type for each flow
@@ -61,6 +64,7 @@ def run_pipeline(pcap_path):
         validated_data['action_type'] = "Unknown / No IP Traffic"
 
     # Build dataset for ML
+    if status: status.write("4. Detecting anomolies in the data")
     numeric_df, anomaly_info = build_dataset(validated_data, pcap_basename)
     # Return to dashboard
     return validated_data, numeric_df, anomaly_info
