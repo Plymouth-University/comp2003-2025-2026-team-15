@@ -24,7 +24,7 @@ def label_flows(df_flows, action):
     
     if action == "Play":
         #Filter for flows that are at least 500KB
-        candidates = df_flows[df_flows["total_bytes"] > 200_000]
+        candidates = df_flows[df_flows["total_bytes"] > 500_000 & (df_flows["avg_packet_size"] > 800)]
         
         if not candidates.empty:
             # Label all large flows as Play
@@ -34,8 +34,8 @@ def label_flows(df_flows, action):
         # Label flows that look like the API trigger (small, outbound)
         # and flows that look like thumbnails (medium, inbound)
         search_mask = (
-            ((df_flows["total_bytes"] > 2000) & (df_flows["outbound_ratio"] > 0.6)) | # Trigger
-            ((df_flows["total_bytes"] > 20000) & (df_flows["outbound_ratio"] < 0.2))   # Thumbnails
+            ((df_flows["total_bytes"] > 2000) & (df_flows["outbound_ratio"] > 0.6)) | # API trigger
+            ((df_flows["total_bytes"] > 20000) & (df_flows["total_bytes"] < 300_000)) # Resulting thumbnails
         )
         df_flows.loc[search_mask, "action"] = "Search"
 

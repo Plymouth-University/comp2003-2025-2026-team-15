@@ -96,6 +96,9 @@ def extract_all_pcap_data(pcap_file, ml_only=False, label=None):
         in_pkts = len(m_df[m_df["is_outbound"] == 0])
         out_pkts = len(m_df[m_df["is_outbound"] == 1])
         
+        duration = m_df["ts"].max() - m_df["ts"].min()
+        total_bytes = m_df["size"].sum()
+
         ml_features.append({
             # 5-tuple for merging with validated_data in main.py
             "src_ip": key[0],
@@ -109,6 +112,8 @@ def extract_all_pcap_data(pcap_file, ml_only=False, label=None):
             "std_iat": m_df["iat"].std() if len(m_df) > 1 else 0,
             "avg_iat": m_df["iat"].mean(),
             "pk_count": len(m_df),
+            "avg_packet_size": m_df["size"].mean(),
+            "throughput": total_bytes / duration if duration > 0 else 0,
             "max_pkt_size": m_df["size"].max(),
             "pkt_burst_std": m_df["size"].std() if len(m_df) > 1 else 0,
             "pk_count_ratio": (out_pkts / in_pkts if in_pkts > 0 else out_pkts),
