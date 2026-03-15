@@ -38,9 +38,10 @@ def run_pipeline(pcap_path, status=None):
         if status: status.write("3. Predicting user actions")
         print("Predicting actions for flows...")
         try:
+            significant_flows = ml_features_df[ml_features_df['total_bytes'] > 1000] 
             # Predict action type for each flow
-            if not ml_features_df.empty:
-                ml_features_df = predict_action_type(ml_features_df)
+            if not significant_flows.empty:
+                ml_features_df = predict_action_type(significant_flows)
             
             # define columns to be merged
             merge_cols = ["src_ip", "dst_ip", "src_port", "dst_port", "protocol"]
@@ -67,4 +68,5 @@ def run_pipeline(pcap_path, status=None):
     if status: status.write("4. Detecting anomolies in the data")
     numeric_df, anomaly_info = build_dataset(validated_data, pcap_basename)
     # Return to dashboard
+    print("Pipeline complete")
     return validated_data, numeric_df, anomaly_info

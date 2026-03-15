@@ -14,53 +14,35 @@ from extract_features_unified import extract_all_pcap_data
 DATA_DIR = "datasets/"
 ACTIONS = ["Like", "Play", "Subscribe", "Comment", "Search"]
 
-# Assign an action label to the most likely flow in a DataFrame.
 def label_flows(df_flows, action):
-     # Default everything to Background noise initially
-    df_flows["action"] = "Background"
+    # Start everything as a 'Candidate'
+    df_flows["action"] = "Candidate"
+    if df_flows.empty: return df_flows
 
     if df_flows.empty:
         return df_flows
     
+    # Determine the action based off of the training folder and likely feature statistics
     if action == "Play":
-        #Filter for flows that are at least 500KB
-        candidates = df_flows[df_flows["total_bytes"] > 500_000 & (df_flows["avg_packet_size"] > 800)]
-        # candidates = df_flows[(df_flows["total_bytes"] > 500_000) & (df_flows["avg_inbound_size"] > 800)]
+        # Usually the largest flow
+        idx = df_flows["total_bytes"].idxmax()
+        df_flows.loc[idx, "action"] = "Play"
         
+    elif action in ["Like", "Subscribe", "Comment", "Search"]:
+        # Outbound heavy therefore picks the largest flow with an outbound ratio > 0.4
+        candidates = df_flows[df_flows["outbound_ratio"] > 0.4]
         if not candidates.empty:
-            # Label all large flows as Play
-            df_flows.loc[candidates.index, "action"] = "Play"
+            idx = candidates["total_bytes"].idxmax()
+            df_flows.loc[idx, "action"] = action
+        else:
+            # Fallback: just pick the largest if outbound ratio is weird
+            idx = df_flows["total_bytes"].idxmax()
+            df_flows.loc[idx, "action"] = action
 
-    elif action == "Search":
-        # Label flows that look like the API trigger (small, outbound)
-        # and flows that look like thumbnails (medium, inbound)
-        search_mask = (
-            ((df_flows["total_bytes"] > 2000) & (df_flows["outbound_ratio"] > 0.6)) | # API trigger
-            ((df_flows["total_bytes"] > 20000) & (df_flows["total_bytes"] < 300_000)) # Resulting thumbnails
-        )
-        df_flows.loc[search_mask, "action"] = "Search"
 
-    elif action in ["Like", "Subscribe"]:
-        # Check for flows < 15KB
-        candidates = df_flows[
-            (df_flows["total_bytes"] < 15000) & 
-            (df_flows["pk_count"] >= 3) & # Must be a handshake + request
-            (df_flows["outbound_ratio"] > 0.7)
-        ]
-        if not candidates.empty:
-            # prioritise the highest outbound ratio
-            df_flows.loc[candidates.index, "action"] = action
+    # remove ambigous flows from training
+    return df_flows[df_flows["action"] != "Candidate"].copy()
 
-    elif action == "Comment":
-        # usually slightly larger than a 'Like' as includes text
-        candidates = df_flows[
-            (df_flows["total_bytes"] < 30000) & 
-            (df_flows["outbound_ratio"] > 0.6)
-        ]
-        if not candidates.empty:
-            df_flows.loc[candidates.index, "action"] = "Comment"
-
-    return df_flows
 
 #  Extract ML features from all PCAP files and produce master_training_data.csv.
 def run(data_dir=DATA_DIR, actions=ACTIONS):

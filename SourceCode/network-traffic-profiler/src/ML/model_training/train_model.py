@@ -39,10 +39,12 @@ X = df[[
     "max_pkt_size", 
     "pkt_burst_std", 
     "pk_count_ratio",
-    "avg_inbound_size", 
+    #"avg_inbound_size", 
     "avg_outbound_size",
     "total_bytes",
-    "outbound_ratio"
+    "outbound_ratio",
+    #"avg_packet_size",
+    "throughput"
 ]] 
 y = df["action"]
 groups = df["file_source"]
