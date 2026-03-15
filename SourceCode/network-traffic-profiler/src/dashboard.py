@@ -231,8 +231,8 @@ colors = {
     "Play": "rgb(255, 212, 59)",
     "Search": "rgb(105, 219, 124)",
     "Subscribe": "rgb(177, 151, 252)",
-    "Non-YouTube": "rgb(116, 192, 252)",
-    "Background Traffic": "rgb(90, 160, 220)"
+    "Non-YouTube": "rgb(192, 192, 192)",
+    "Background": "rgb(192, 192, 192)"
 }
 
 # pie chart
