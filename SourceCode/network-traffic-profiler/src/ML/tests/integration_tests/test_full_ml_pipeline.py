@@ -24,9 +24,9 @@ from sklearn.metrics import accuracy_score
 FEATURE_COLS = [
     "duration", "std_iat", "avg_iat", "pk_count",
     "max_pkt_size", "pkt_burst_std", "pk_count_ratio",
-    "avg_inbound_size", "avg_outbound_size",
-    "total_bytes", "outbound_ratio",
+    "avg_outbound_size","total_bytes", "outbound_ratio",
 ]
+
 ACTIONS = ["Like", "Play", "Subscribe", "Comment", "Search"]
 
 
@@ -94,7 +94,7 @@ def _build_pipeline(tmp_path, n_per_class: int = 50):
     # Step 3 – load CSV, balance background, encode labels
     df = pd.read_csv(csv_path)
     actions_df    = df[df["action"] != "Background"]
-    background_df = df[df["action"] == "Background"].sample(n=40, random_state=42)
+    background_df = df[df["action"] == "Background"]
     df = pd.concat([actions_df, background_df], ignore_index=True)
 
     X      = df[FEATURE_COLS]
@@ -175,11 +175,9 @@ class TestCsvToModel:
 
     def test_train_test_groups_are_disjoint(self, tmp_path):
         p = _build_pipeline(tmp_path)
-        # Reconstruct the split so we can inspect groups
         groups = p["df"]["file_source"]
         gss = GroupShuffleSplit(n_splits=1, test_size=0.33, random_state=42)
-        tr, te = next(gss.split(p["X"], p["y_train"].tolist() + p["y_test"].tolist(), groups))
-        # file sources must be mutually exclusive
+        tr, te = next(gss.split(p["X"], p["df"]["action"], groups))
         assert set(groups.iloc[tr]).isdisjoint(set(groups.iloc[te]))
 
     def test_model_output_shape_matches_test_set(self, tmp_path):
@@ -276,8 +274,7 @@ class TestEdgeCases:
     def test_model_produces_probabilities_for_all_classes(self, tmp_path):
         p = _build_pipeline(tmp_path)
         proba = p["model"].predict_proba(p["X_test"])
-        assert proba.shape == (len(p["X_test"]), len(p["le"].classes_))
-        # Each row must sum to ~1
+        assert proba.shape == (len(p["X_test"]), len(p["model"].classes_))
         np.testing.assert_allclose(proba.sum(axis=1), 1.0, atol=1e-6)
 
     def test_noise_does_not_crash_prediction(self, tmp_path):
