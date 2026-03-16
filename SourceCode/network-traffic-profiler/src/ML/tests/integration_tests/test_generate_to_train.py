@@ -22,11 +22,21 @@ from sklearn.preprocessing import LabelEncoder
 from sklearn.model_selection import GroupShuffleSplit
 from sklearn.metrics import accuracy_score
 
+#FEATURE_COLS = [
+ #   "duration", "std_iat", "avg_iat", "pk_count",
+  #  "max_pkt_size", "pkt_burst_std", "pk_count_ratio",
+   # "avg_inbound_size", "avg_outbound_size",
+    #"total_bytes", "outbound_ratio",
+#]
 FEATURE_COLS = [
-    "duration", "std_iat", "avg_iat", "pk_count",
-    "max_pkt_size", "pkt_burst_std", "pk_count_ratio",
-    "avg_inbound_size", "avg_outbound_size",
-    "total_bytes", "outbound_ratio",
+    "duration",
+    "std_iat",
+    "avg_iat",
+    "pk_count",
+    "avg_inbound_size",
+    "avg_outbound_size",
+    "total_bytes",
+    "outbound_ratio",
 ]
 ACTIONS = ["Like", "Play", "Subscribe", "Comment", "Search", "Background"]
 
@@ -66,7 +76,7 @@ def _make_csv(tmp_path, n_per_class: int = 40) -> str:
 def _prepare(csv_path):
     df = pd.read_csv(csv_path)
     actions_df    = df[df["action"] != "Background"]
-    background_df = df[df["action"] == "Background"].sample(n=40, random_state=42)
+    background_df = df[df["action"] == "Background"]
     df = pd.concat([actions_df, background_df], ignore_index=True)
     X = df[FEATURE_COLS]
     le = LabelEncoder()
@@ -167,4 +177,5 @@ class TestArtefactPersistence:
         path = str(tmp_path / "action_model.pkl")
         joblib.dump(model, path)
         assert joblib.load(path).n_features_in_ == len(FEATURE_COLS)
+        
         
