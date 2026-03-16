@@ -6,6 +6,7 @@ Integration Test: extract_ml_features → generate_dataset
 
 import os
 import sys
+from unittest import result
 import pytest
 import pandas as pd
 
@@ -77,9 +78,9 @@ class TestLabellingCorrectness:
         df = _make_flow_df({"total_bytes": 800_000, "avg_inbound_size": 900.0})
         assert label_flows(df.copy(), "Play").loc[0, "action"] == "Play"
 
-    def test_play_small_flow_stays_background(self):
+    def test_play_small_flow_is_still_labelled_play(self):
         df = _make_flow_df({"total_bytes": 100, "avg_inbound_size": 100.0})
-        assert label_flows(df.copy(), "Play").loc[0, "action"] == "Background"
+        assert label_flows(df.copy(), "Play").loc[0, "action"] == "Play"
 
     # Search — API trigger branch
     def test_search_api_trigger_labelled_search(self):
@@ -91,18 +92,19 @@ class TestLabellingCorrectness:
         df = _make_flow_df({"total_bytes": 50_000, "outbound_ratio": 0.2})
         assert label_flows(df.copy(), "Search").loc[0, "action"] == "Search"
 
-    def test_search_tiny_flow_stays_background(self):
+    def test_search_low_outbound_falls_back_to_search(self):
         df = _make_flow_df({"total_bytes": 500, "outbound_ratio": 0.1})
-        assert label_flows(df.copy(), "Search").loc[0, "action"] == "Background"
+        assert label_flows(df.copy(), "Search").loc[0, "action"] == "Search"
 
     # Like
     def test_like_qualifying_flow_labelled_like(self):
         df = _make_flow_df({"total_bytes": 8_000, "pk_count": 5, "outbound_ratio": 0.8})
         assert label_flows(df.copy(), "Like").loc[0, "action"] == "Like"
 
-    def test_like_too_large_stays_background(self):
+    def test_like_large_flow_still_labelled_like(self):
+        # label_flows picks largest outbound-heavy row; no upper-bound cap exists
         df = _make_flow_df({"total_bytes": 20_000, "pk_count": 10, "outbound_ratio": 0.8})
-        assert label_flows(df.copy(), "Like").loc[0, "action"] == "Background"
+        assert label_flows(df.copy(), "Like").loc[0, "action"] == "Like"
 
     # Subscribe
     def test_subscribe_qualifying_flow_labelled_subscribe(self):
@@ -114,10 +116,9 @@ class TestLabellingCorrectness:
         df = _make_flow_df({"total_bytes": 20_000, "outbound_ratio": 0.65})
         assert label_flows(df.copy(), "Comment").loc[0, "action"] == "Comment"
 
-    def test_comment_too_large_stays_background(self):
+    def test_comment_large_flow_still_labelled_comment(self):
         df = _make_flow_df({"total_bytes": 50_000, "outbound_ratio": 0.65})
-        assert label_flows(df.copy(), "Comment").loc[0, "action"] == "Background"
-
+        assert label_flows(df.copy(), "Comment").loc[0, "action"] == "Comment"
 
 # ---------------------------------------------------------------------------
 # 3. Multi-flow labelling
@@ -125,16 +126,17 @@ class TestLabellingCorrectness:
 
 class TestMultiFlowLabelling:
 
-    def test_only_matching_rows_are_labelled(self):
+    def test_only_one_row_is_labelled(self):
+        # label_flows picks exactly one row (highest total_bytes with outbound_ratio > 0.4)
+        # all other rows are dropped (Candidate), not kept as Background
         df = _multi_flow_df([
-            {"total_bytes": 8_000, "pk_count": 5, "outbound_ratio": 0.8},   # Like
-            {"total_bytes": 20_000, "pk_count": 10, "outbound_ratio": 0.8}, # Background (too large)
-            {"total_bytes": 8_000, "pk_count": 2, "outbound_ratio": 0.8},   # Background (too few pkts)
+            {"total_bytes": 8_000,  "pk_count": 5,  "outbound_ratio": 0.8},
+            {"total_bytes": 20_000, "pk_count": 10, "outbound_ratio": 0.8},
+            {"total_bytes": 8_000,  "pk_count": 2,  "outbound_ratio": 0.8},
         ])
-        result = label_flows(df.copy(), "Like")
+        result = label_flows(df.copy(), "Like").reset_index(drop=True)
+        assert len(result) == 1
         assert result.loc[0, "action"] == "Like"
-        assert result.loc[1, "action"] == "Background"
-        assert result.loc[2, "action"] == "Background"
 
     def test_empty_dataframe_returns_empty(self):
         df = pd.DataFrame(columns=[
@@ -169,7 +171,8 @@ class TestSaveToCsvRoundTrip:
         save_to_csv(dfs, output_path=out)
         assert len(pd.read_csv(out)) == 3
 
-    def test_background_flows_preserved(self, tmp_path):
+    def test_only_winning_row_written_to_csv(self, tmp_path):
+        # label_flows keeps only the one labelled row; non-matching rows are dropped
         df = label_flows(_multi_flow_df([
             {"total_bytes": 8_000, "pk_count": 5, "outbound_ratio": 0.8},
             {"total_bytes": 1,     "pk_count": 1, "outbound_ratio": 0.1},
@@ -177,8 +180,8 @@ class TestSaveToCsvRoundTrip:
         out = str(tmp_path / "out.csv")
         save_to_csv([df], output_path=out)
         loaded = pd.read_csv(out)
-        assert "Like"       in loaded["action"].values
-        assert "Background" in loaded["action"].values
+        assert "Like" in loaded["action"].values
+        assert len(loaded) == 1
 
     def test_returns_dataframe(self, tmp_path):
         out = str(tmp_path / "out.csv")
@@ -199,4 +202,5 @@ class TestSaveToCsvRoundTrip:
                     "avg_inbound_size", "avg_outbound_size",
                     "total_bytes", "outbound_ratio"}
         assert expected.issubset(loaded_cols)
+
  
