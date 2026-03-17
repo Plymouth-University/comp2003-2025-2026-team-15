@@ -1,0 +1,5 @@
+[server]
+maxUploadSize = 5000
+# If you're running locally, this ensures the header doesn't clip
+enableCORS = false
+enableXsrfProtection = false

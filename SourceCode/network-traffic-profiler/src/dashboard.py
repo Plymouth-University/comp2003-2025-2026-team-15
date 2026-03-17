@@ -48,7 +48,7 @@ if "current_file" not in st.session_state:
 
 # PCAP File Upload
 st.sidebar.header("File Upload")
-uploaded_file = st.sidebar.file_uploader("Upload a .pcap/.pcapng file", type=["pcap", "pcapng"], accept_multiple_files=False)
+uploaded_file = st.sidebar.file_uploader("Upload a .pcap/.pcapng file", type=["pcap", "pcapng"], accept_multiple_files=False, max_upload_size=5000)
 # If no file has been uploaded, stop the app
 if uploaded_file is None:
     st.info("Upload a PCAP file to start!")
@@ -84,6 +84,7 @@ if uploaded_file != st.session_state.current_file:
 
 # Checkbox to confirm ownership/authorisation
 if st.session_state.file_pending_upload:
+    warning_placeholder = st.sidebar.empty()
     confirm = st.sidebar.checkbox("I confirm that I own or am authorised to analyse this PCAP file (required)")
 
     # Button to upload PCAP file
@@ -92,6 +93,13 @@ if st.session_state.file_pending_upload:
     if upload_clicked and not confirm:
         st.error("You must confirm that you are authorised to analyse this PCAP file before proceeding.")
         st.stop()
+
+
+
+    file_size_bytes = uploaded_file.size
+    file_size_mb = file_size_bytes / (1024 * 1024)
+    if file_size_mb > 500:
+        warning_placeholder.warning('Please note that large files may induce long processing times and require large amounts of RAM to be available on the host machine.', icon="⚠️")
 
     # If the user checked the box and clicked the button, process the file
     if confirm and upload_clicked:
