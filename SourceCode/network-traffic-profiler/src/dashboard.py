@@ -383,7 +383,7 @@ if show_top_conversations:
 # All Flows Table
 if show_flow_table:
         st.subheader("All Flows Table")
-        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol.")
+        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol, and classified by action type (e.g. Play, Search, Like).")
         table_cols = [
             "src_ip", "dst_ip",
             "src_port", "dst_port",
@@ -402,7 +402,7 @@ if show_flow_table:
 # Anomalous Flows Table
 if show_anomalous_table:
     st.subheader("Anomalous Flows")
-    st.write("Flows that likely contain statistical anomolies")
+    st.write("Flows that likely contain statistical anomalies")
 
     numeric_df = st.session_state.numeric_df
     anomalous = numeric_df[numeric_df["anomaly"] == True]
@@ -415,7 +415,7 @@ if show_anomalous_table:
 # Flagged Flows Table    
 if show_flagged_flows:
     st.subheader("Flagged Flows")
-    st.write("Flows that failed one or more validiation rules, indicating potential errors or anomalies in the data.")
+    st.write("Flows that failed one or more validation rules, indicating potential errors or anomalies in the data.")
     invalid_flows = st.session_state.flows[st.session_state.flows["is_valid"] == False]
     
     if invalid_flows.empty:
