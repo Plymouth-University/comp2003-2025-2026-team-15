@@ -24,10 +24,41 @@ def load_dataset(path):
     # Create a grouped progress area
     with st.status("Processing...", state="running", expanded=True) as status:
         # Pass the status object to the pipeline
-        results = main.run_pipeline(path, status)
+        # catch exceptions so no raw tracebacks are passed to the dashboard
+        try:
+            results = main.run_pipeline(path, status)
+        except Exception as e:
+            status.update(label="Processing failed.", state="error", expanded=False)
+            raise RuntimeError(str(e))
         status.update(label="Processing Complete! Loading results...", state="complete", expanded=False)
     return results
 
+# check for possible exceptions from scapy error logs and report back readable error messages
+def safe_load_dataset(path):
+    try:
+        result = load_dataset(path)
+    except RuntimeError as e:
+        msg = str(e).lower()
+        # check for keywords in error trace log 
+        if any(kw in msg for kw in ("no data", "no data could be read", "not a pcap", "magic", "invalid", "truncated", "corrupt", "empty")):
+            raise RuntimeError(
+                "The file appears to be empty or is not a valid PCAP/PCAPNG file."
+            )
+        raise RuntimeError(f"An unexpected error occurred while processing the file: {e}")
+    except Exception as e:
+        raise RuntimeError(f"An unexpected error occurred while processing the file: {e}")
+
+    if result is None or not isinstance(result, (tuple, list)) or len(result) != 3:
+        raise RuntimeError("The pipeline returned an unexpected result.")
+
+    flows_df, numeric_df, anomaly_info = result
+
+    if flows_df is None or (isinstance(flows_df, pd.DataFrame) and flows_df.empty):
+        raise RuntimeError(
+            "No network flows were found in this PCAP file: the file may be empty, contain no recognised traffic, or all flows were filtered out during parsing."
+        )
+
+    return flows_df, numeric_df, anomaly_info
 
 
 # Initialise session state keys
@@ -45,6 +76,8 @@ if "file_pending_upload" not in st.session_state:
     st.session_state.file_pending_upload = False
 if "current_file" not in st.session_state:
     st.session_state.current_file = None
+if "pipeline_error" not in st.session_state:
+    st.session_state.pipeline_error = None
 
 # PCAP File Upload
 st.sidebar.header("File Upload")
@@ -81,6 +114,7 @@ if uploaded_file != st.session_state.current_file:
     st.session_state.current_file = uploaded_file
     st.session_state.file_pending_upload = True
     st.session_state.flows = None # Clear old results
+    st.session_state.pipeline_error = None
 
 # Checkbox to confirm ownership/authorisation
 if st.session_state.file_pending_upload:
@@ -94,7 +128,10 @@ if st.session_state.file_pending_upload:
         st.error("You must confirm that you are authorised to analyse this PCAP file before proceeding.")
         st.stop()
 
-
+    # catch empty file
+    if upload_clicked and uploaded_file.size == 0:
+        st.error("The uploaded file is empty. Please upload a valid PCAP file.")
+        st.stop()
 
     file_size_bytes = uploaded_file.size
     file_size_mb = file_size_bytes / (1024 * 1024)
@@ -109,17 +146,37 @@ if st.session_state.file_pending_upload:
         temp.write(uploaded_file.read())
         # Run pipeline passing through the temporary file
         
-        flows_df, numeric_df, anomaly_info = load_dataset(temp.name)
+        # safe load, in case one of the values is missing from the return in main.py
+        try:
+            flows_df, numeric_df, anomaly_info = safe_load_dataset(temp.name)
 
-        # Update session state to track uploaded file
-        st.session_state.flows = flows_df
-        st.session_state.uploaded_file_name = uploaded_file.name
-        st.session_state.numeric_df = numeric_df
-        st.session_state.anomaly_info = anomaly_info
+            # Update session state to track uploaded file
+            st.session_state.flows = flows_df
+            st.session_state.uploaded_file_name = uploaded_file.name
+            st.session_state.numeric_df = numeric_df
+            st.session_state.anomaly_info = anomaly_info
+            st.session_state.pipeline_error = None
 
-        # Mark file as processed, hides checkbox & button
-        st.session_state.file_pending_upload = False
-        st.rerun() # Immediate refresh
+            # Mark file as processed, hides checkbox & button
+            st.session_state.file_pending_upload = False
+            st.rerun() # Immediate refresh
+
+        except RuntimeError as e:
+            st.session_state.pipeline_error = str(e)
+            st.session_state.file_pending_upload = False
+            st.rerun()
+
+        except Exception as e:
+            st.session_state.pipeline_error = (
+                f"Unexpected error occurred: {e}\n\n"
+            )
+            st.session_state.file_pending_upload = False
+            st.rerun()
+
+# show error message
+if st.session_state.pipeline_error:
+    st.error(f"{st.session_state.pipeline_error}")
+    st.stop()
 
 # If still no processed data, stop here
 if st.session_state.flows is None:
@@ -131,6 +188,11 @@ df = st.session_state.flows.copy()
 
 # Removes invalid rows
 df = df[df["is_valid"] == True]
+
+# show error message if all flows invalid
+if df.empty:
+    st.warning("All flows were filtered out during validation.")
+    st.stop()
 
 # Filtering section
 st.sidebar.header("Filters")
@@ -182,6 +244,11 @@ if src_ports:
 
 if dst_ports:
     filtered = filtered[filtered["dst_port"].isin(dst_ports)]
+
+# return message if no flows match the filter
+if filtered.empty:
+    st.warning("No flows match the current filter combination.")
+    st.stop()
 
 # Table View Filters
 st.sidebar.header("Table Display Options")
@@ -405,12 +472,15 @@ if show_anomalous_table:
     st.write("Flows that likely contain statistical anomalies")
 
     numeric_df = st.session_state.numeric_df
-    anomalous = numeric_df[numeric_df["anomaly"] == True]
+    if numeric_df is not None and not numeric_df.empty:
+        anomalous = numeric_df[numeric_df["anomaly"] == True]
 
-    if anomalous.empty:
-      st.info("No anomalous flows detected")
+        if anomalous.empty:
+          st.info("No anomalous flows detected")
+        else:
+          st.dataframe(rename_cols(anomalous), width="stretch")
     else:
-      st.dataframe(rename_cols(anomalous), width="stretch")
+        st.info("Numeric flow data is not available.")
       
 # Flagged Flows Table    
 if show_flagged_flows:
@@ -434,12 +504,15 @@ st.write("Packet Count (number of packets in a flow) vs Byte Count (total amount
 x = "packet_count"
 y = "byte_count"
 
-fig = px.scatter(
-    numeric_df,
-    x=x,
-    y=y,
-    color="anomaly",
-    color_discrete_map={True: "red", False: "blue"}
-)
+if numeric_df is not None and not numeric_df.empty:
+    fig = px.scatter(
+        numeric_df,
+        x=x,
+        y=y,
+        color="anomaly",
+        color_discrete_map={True: "red", False: "blue"}
+    )
 
-st.plotly_chart(fig, width="stretch")
+    st.plotly_chart(fig, use_container_width=True)
+else:
+    st.info("No data available for the scatter plot.")
