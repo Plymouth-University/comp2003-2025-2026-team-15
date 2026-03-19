@@ -31,6 +31,7 @@ def run_pipeline(pcap_path, status=None):
     
     # Extract ML features for each flow 
     ml_features_df = pcap_extraction_results[1]
+    ml_features_df['action_type'] = 'Background' 
 
   
     if not ml_features_df.empty:
