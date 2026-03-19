@@ -257,7 +257,7 @@ with col_a:
             color="action_type",
             color_discrete_map=colors
         )
-        st.plotly_chart(fig_pie, use_container_width=True)
+        st.plotly_chart(fig_pie, width="stretch")
     else:
         st.info("No actions to display.")
 
@@ -305,7 +305,7 @@ with col_b:
             legend_title="Action"
         )
 
-        st.plotly_chart(fig, use_container_width=True)
+        st.plotly_chart(fig, width="stretch")
     else:
         st.info("No timeline data available.")
     
@@ -332,7 +332,7 @@ fig_time = px.bar(
     y="byte_count",
 )
 
-st.plotly_chart(fig_time, use_container_width=True)
+st.plotly_chart(fig_time, width="stretch")
 
 # Table
 # Top Endpoints Table
@@ -346,7 +346,7 @@ if show_top_endpoints:
         .sort_values(by="byte_count", ascending=False)
         .head(20)
     )
-    st.dataframe(rename_cols(endpoints_df), use_container_width=True)
+    st.dataframe(rename_cols(endpoints_df), width="stretch")
 
 
 # Top Conversations Table 
@@ -377,7 +377,7 @@ if show_top_conversations:
     top_conversations = top_conversations[
         ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
     ]
-    st.dataframe(rename_cols(top_conversations.head(10)), use_container_width=True)
+    st.dataframe(rename_cols(top_conversations.head(10)), width="stretch")
 
     
 # All Flows Table
@@ -397,7 +397,7 @@ if show_flow_table:
         ]
         # Only show action_type if present
         display_cols = [col for col in table_cols if col in filtered.columns]
-        st.dataframe(rename_cols(filtered[display_cols]), use_container_width=True)
+        st.dataframe(rename_cols(filtered[display_cols]), width="stretch")
 
 # Anomalous Flows Table
 if show_anomalous_table:
@@ -410,7 +410,7 @@ if show_anomalous_table:
     if anomalous.empty:
       st.info("No anomalous flows detected")
     else:
-      st.dataframe(rename_cols(anomalous), use_container_width=True)
+      st.dataframe(rename_cols(anomalous), width="stretch")
       
 # Flagged Flows Table    
 if show_flagged_flows:
@@ -422,7 +422,7 @@ if show_flagged_flows:
         st.info("No flagged flows detected")
     else:
         cols = ["error_reason"] + [c for c in invalid_flows.columns if c not in ("error_reason", "is_valid")] 
-        st.dataframe(rename_cols(invalid_flows[cols]), use_container_width=True)
+        st.dataframe(rename_cols(invalid_flows[cols]), width="stretch")
 
 # plots for visualisiung anomalities in data
 
@@ -442,4 +442,4 @@ fig = px.scatter(
     color_discrete_map={True: "red", False: "blue"}
 )
 
-st.plotly_chart(fig, use_container_width=True)
+st.plotly_chart(fig, width="stretch")
