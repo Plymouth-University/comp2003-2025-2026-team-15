@@ -15,8 +15,8 @@ DATA_DIR = "datasets/"
 ACTIONS = ["Like", "Play", "Subscribe", "Comment", "Search"]
 
 def label_flows(df_flows, action):
-    # Start everything as a 'Candidate'
-    df_flows["action"] = "Candidate"
+    # Start everything as 'Background'
+    df_flows["action"] = "Background"
     if df_flows.empty: return df_flows
 
     if df_flows.empty:
@@ -41,7 +41,7 @@ def label_flows(df_flows, action):
 
 
     # remove ambigous flows from training
-    return df_flows[df_flows["action"] != "Candidate"].copy()
+    return df_flows
 
 
 #  Extract ML features from all PCAP files and produce master_training_data.csv.
