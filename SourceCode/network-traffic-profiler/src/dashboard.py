@@ -250,6 +250,8 @@ if filtered.empty:
     st.warning("No flows match the current filter combination.")
     st.stop()
 
+filtered["action_type"] = filtered["action_type"].replace("Play", "Streaming")
+
 # Table View Filters
 st.sidebar.header("Table Display Options")
 
@@ -303,7 +305,7 @@ col_a, col_b = st.columns(2) # two side by side columns
 colors = {
     "Comment": "rgb(255, 107, 107)",
     "Like": "rgb(255, 169, 77)",
-    "Play": "rgb(255, 212, 59)",
+    "Streaming": "rgb(255, 212, 59)",
     "Search": "rgb(105, 219, 124)",
     "Subscribe": "rgb(177, 151, 252)",
     "Non-YouTube": "rgb(192, 192, 192)",
@@ -389,7 +391,7 @@ if st.session_state.anomaly_info is not None:
     col3.metric("Anomaly %", f"{info['anomaly_percentage']:.2f}%")
 
 # Traffic over time
-st.subheader("Traffic Volume Over Time (Byte Count)")
+st.subheader("Traffic Volume Over Time (Bytes)")
 st.write("Visualises how much traffic occurred over time, helping identify spikes, bursts, or unusual peaks in network activity.")
 time_df = filtered.groupby("first_packet_index")["byte_count"].sum().reset_index()
 
@@ -397,6 +399,10 @@ fig_time = px.bar(
     time_df,
     x="first_packet_index",
     y="byte_count",
+    labels={
+        "first_packet_index": "Time (Packet Index)",
+        "byte_count": "Bytes"
+    }
 )
 
 st.plotly_chart(fig_time, width="stretch")
@@ -450,7 +456,7 @@ if show_top_conversations:
 # All Flows Table
 if show_flow_table:
         st.subheader("All Flows Table")
-        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol, and classified by action type (e.g. Play, Search, Like).")
+        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol, and classified by action type (e.g. Streaming, Search, Like).")
         table_cols = [
             "src_ip", "dst_ip",
             "src_port", "dst_port",
