@@ -41,33 +41,33 @@ Understand network activity through the following tables, including beginner-fri
 
 A list of every identified network flow
 
-![alt text](image-6.png)
+<img src="assets/image-6.png" width="500" alt="All Flows Table">
 
 #### 2. Traffic Volume Over Time
 
 A time graph showing how much traffic occured over time
 
-![alt text](image-7.png)
+<img src="assets/image-7.png" width="500" alt="Traffic Volume Over Time Table">
 
 #### 3. Top Endpoints & Conversations
 
 Top 10 network flows & IP pairs with the largest byte count
 
-![alt text](image-8.png)
+<img src="assets/image-8.png" width="500" alt="Top Endpoints Table">
 
-![alt text](image-9.png)
+<img src="assets/image-9.png" width="500" alt="Top Conversations Table">
 
 #### 4. Flagged Flows
 
 A list of flows that fail validation rules
 
-![alt text](image-10.png)
+<img src="assets/image-10.png" width="500" alt="Flagged Flows Table">
 
 #### Filtering & CSV file download
 
 Filters can be applied to toggle visibility. Additionally, the selected network data can be downloaded as sorted .CSV file.
 
-![alt text](image-11.png)
+<img src="assets/image-11.png" width="500" alt="Filtering and CSV file download options">
 
 ### User action prediction
 
@@ -79,14 +79,14 @@ A interactable piechart and timeline display the predicted actions.
 
 Currently supported actions include `Stream`, `Search`, `Comment`, `Like`, and `Subscribe`.
 
-![alt text](image-1.png)
+<img src="assets/image-1.png" width="500" alt="Activity Analysis Dashboard Section">
 
 ### Anomaly detection
 
 A list of flows that a an unsupervised IsolationForest algorithm has identified as containing anomalies, based on values differing from the norm.
 **Note: This feature is still in development and may not display accurate results.**
 
-![alt text](image-3.png)
+<img src="assets/image-3.png" width="500" alt="Anomaly Detection Dashboard Section">
 
 ## Tech stack
 The application is developed using Python as main development language.
