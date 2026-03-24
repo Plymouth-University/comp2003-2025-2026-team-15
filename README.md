@@ -156,4 +156,4 @@ This project forms part of a larger project, which aims to develop an AI-driven 
 Find our Design Documents [Here](https://github.com/Plymouth-University/comp2003-2025-2026-team-15/tree/0e4070ed433bc7e53d49b43b76898e0fa8a27ccc/Design%20Documents)
 
 ## License
-MIT License attached
+This project is licensed under the [MIT License](LICENSE).
