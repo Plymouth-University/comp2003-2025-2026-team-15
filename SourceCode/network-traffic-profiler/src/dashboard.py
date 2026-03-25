@@ -186,6 +186,10 @@ if st.session_state.flows is None:
 # Copy the extracted data into a dataframe
 df = st.session_state.flows.copy()
 
+# ensure correct formating for port display on macOS
+df["src_port"] = df["src_port"].astype("Int64")
+df["dst_port"] = df["dst_port"].astype("Int64")
+
 # Removes invalid rows
 df = df[df["is_valid"] == True]
 
