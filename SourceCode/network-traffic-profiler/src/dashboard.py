@@ -383,7 +383,9 @@ if st.session_state.anomaly_info is not None:
     info = st.session_state.anomaly_info
 
     st.subheader("Anomaly Detection Summary")
-    st.write("Overview of how many flows were detected as anomalous based on statistical ML rules.")
+    st.write("Overview of how many flows were detected as anomalous, using an unsupervised ML model (IsolationForest)."
+            "\nAn anomalous flow deviates from the typical traffic behaviour observed in the rest of the flows."
+            "\nPlease note that this feature is just a prototype and not optimised hence not reliable.")
 
     col1, col2, col3 = st.columns(3)
     col1.metric("Anomalous Flows", info["anomaly_count"])
@@ -475,7 +477,8 @@ if show_flow_table:
 # Anomalous Flows Table
 if show_anomalous_table:
     st.subheader("Anomalous Flows")
-    st.write("Flows that likely contain statistical anomalies")
+    st.write("Individual flows that likely contain statistical anomalies, based on their numerical features."
+            "\nA flow is marked as anomalous if it differs from the typical features found in the rest of the flows.")
 
     numeric_df = st.session_state.numeric_df
     if numeric_df is not None and not numeric_df.empty:
@@ -505,7 +508,8 @@ if show_flagged_flows:
 # traffic activity comparison: packet vs byte count
 
 st.subheader("Flow Activity Distribution")
-st.write("Packet Count (number of packets in a flow) vs Byte Count (total amount of data transferred).")
+st.write("This scatter plot compares the number of packets in each flow against the total data transferred."
+        "\nEach point represents a network flow, while the red points highlight outliers, identified as anomalies.")
 
 x = "packet_count"
 y = "byte_count"
