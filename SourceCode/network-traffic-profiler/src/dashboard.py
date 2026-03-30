@@ -302,6 +302,25 @@ def rename_cols(df):
 
 # Dashboard visualisation section
 
+# All Flows Table
+if show_flow_table:
+        st.subheader("All Flows Table")
+        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol, and classified by action type (e.g. Streaming, Search, Like).")
+        table_cols = [
+            "src_ip", "dst_ip",
+            "src_port", "dst_port",
+            "start_time", "end_time",
+            "protocol", "protocol_name",
+            "packet_count", "byte_count",
+            "avg_packet_size",
+            "first_packet_index", "last_packet_index",
+            "duration",
+            "action_type" # Add action_type column
+        ]
+        # Only show action_type if present
+        display_cols = [col for col in table_cols if col in filtered.columns]
+        st.dataframe(rename_cols(filtered[display_cols]), width="stretch")
+
 # Activity Analysis 
 st.header("Activity Analysis")
 col_a, col_b = st.columns(2) # two side by side columns 
@@ -457,26 +476,6 @@ if show_top_conversations:
         ["Source IP", "Dest IP", "total_bytes", "total_packets", "avg_packet_size", "flow_count"]
     ]
     st.dataframe(rename_cols(top_conversations.head(10)), width="stretch")
-
-    
-# All Flows Table
-if show_flow_table:
-        st.subheader("All Flows Table")
-        st.write("A network flow is a sequence of packets sent from a source to a destination that all share a common set of characteristics: Source IP, Destination IP, Source Port, Destination Port & Protocol, and classified by action type (e.g. Streaming, Search, Like).")
-        table_cols = [
-            "src_ip", "dst_ip",
-            "src_port", "dst_port",
-            "start_time", "end_time",
-            "protocol", "protocol_name",
-            "packet_count", "byte_count",
-            "avg_packet_size",
-            "first_packet_index", "last_packet_index",
-            "duration",
-            "action_type" # Add action_type column
-        ]
-        # Only show action_type if present
-        display_cols = [col for col in table_cols if col in filtered.columns]
-        st.dataframe(rename_cols(filtered[display_cols]), width="stretch")
 
 # Anomalous Flows Table
 if show_anomalous_table:
